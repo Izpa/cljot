@@ -1,0 +1,11 @@
+#merge [{:app/server
+         {:host            #or [#env "SERVER_HOST" "0.0.0.0"]
+          :port            #or [#env "SERVER_PORT" 8080]
+          :middlewares     #ig/ref :middleware/middlewares}
+
+         #_:db/execute!
+         #_{:ds #ig/ref #profile {:default :db/ds
+                                :test :test-utils/db-ds}}}
+        
+        #include #profile {:test "test_config.edn"
+                           :default "default_config.edn"}]

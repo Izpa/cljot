@@ -1,0 +1,6 @@
+{:db/ds
+ {:host            #or [#env "DB_HOST" "0.0.0.0"]
+  :port            #or [#env "DB_PORT" 5432]
+  :dbname          #or [#env "DB_NAME" "cljot"]
+  :user            #or [#env "DB_USER" "user"]
+  :password-secret #or [#env "DB_PASSWORD" "password"]}}
