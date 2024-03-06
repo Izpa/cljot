@@ -32,7 +32,7 @@
       (let [updates (poll-updates bot config @update-id)
             messages (:result updates)]
         (doseq [msg messages]
-          (handle-message! msg)
+          (handle-message! (:message msg))
           (-> msg
               :update_id
               inc

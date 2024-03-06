@@ -19,3 +19,4 @@ pom.xml.asc
 resources/public/js
 .shadow-cljs
 local
+.vscode

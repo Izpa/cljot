@@ -1,6 +1,7 @@
 #merge [{:app/client-bot
          {:token #env "CLIENT_BOT_TELEGRAM_TOKEN"
           :url #env "SELF_URL"
+          :courrier-chat-id #env "COURIER_CHAT_ID"
           :long-polling-config {:timeout #or [#env "CLIENT_BOT_LONG_POLLING_TIMEOUT" 10]
                                 :sleep #or [#env "CLIENT_BOT_LONG_POLLING_SLEEP" 1000]}}
 
