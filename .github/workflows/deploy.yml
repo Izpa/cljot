@@ -1,4 +1,4 @@
-name: Deploy to develop
+name: Deploy to main
 
 env:
     CONTEXT_DIR: './'
@@ -10,7 +10,7 @@ env:
 on:
     push:
         branches:
-            - develop
+            - main
         # you can specify path if you have a monorepo and you want to deploy if particular directory is changed, make sure to update `CONTEXT_DIR` too
         # paths:
         #   - "backend-app/**"
@@ -58,7 +58,7 @@ jobs:
           with:
                 registry: ghcr.io
                 username: ${{ github.repository_owner }}
-                password: ${{ secrets.GH_TOKEN }}
+                password: ${{ secrets.GITHUB_TOKEN }}
     
         - name: Preset Image Name
           run: echo "IMAGE_URL=$(echo ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:$(echo ${{ github.sha }} | cut -c1-7) | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
