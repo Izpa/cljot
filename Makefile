@@ -52,7 +52,7 @@ run-docker:
 
 .PHONY: run-dev
 run-dev:
-	clj -A:dev:common-test:unit-test:integration-test -X user/main
+	clj -A:dev:common-test:unit-test:integration-test -X user/run-system!
 
 .PHONY: run-system
 run-system:

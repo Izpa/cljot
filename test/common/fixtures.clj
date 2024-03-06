@@ -6,4 +6,4 @@
 (defn with-shutdown-db
   [f]
   (f)
-  ((ig-init-and-get-key :test-utils/bulk-db-shutdown)))
+  ((ig-init-and-get-key :test-utils/db-shutdown)))

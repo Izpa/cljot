@@ -18,3 +18,4 @@ pom.xml.asc
 .eastwood
 resources/public/js
 .shadow-cljs
+local

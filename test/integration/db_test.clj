@@ -1,4 +1,4 @@
-(ns integration.db-test
+(ns db-test
   (:require
    [clojure.test :refer [deftest is use-fixtures]]
    [fixtures :refer [with-shutdown-db]]
