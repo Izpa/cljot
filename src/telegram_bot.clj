@@ -23,7 +23,7 @@
                                                                    username
                                                                    "):\n"
                                                                    text))
-            _ (tbot/pin-chat-message courier-chat-id message_id)
+            _ (tbot/pin-chat-message bot courier-chat-id message_id)
             requester-answer (tbot/send-message bot
                                                 id
                                                 (if ok
