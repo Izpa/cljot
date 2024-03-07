@@ -5,7 +5,7 @@
    [taoensso.timbre :as log]
    [telegrambot-lib.core :as tbot]))
 
-(defmethod ig/init-key ::msg-handler [_ {:keys [bot courier-chat-id]}]
+(defmethod ig/init-key ::msg-handler [_ {:keys [_bot _courier-chat-id]}]
   println)
 
 (defn start-telegram-bot

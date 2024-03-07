@@ -11,8 +11,8 @@
      (-> %
          :body
          slurp
-         :message
          (json/parse-string true)
+         :message
          msg-handler)
      {:status  200
       :headers {"Content-Type" "text/html"}}))
