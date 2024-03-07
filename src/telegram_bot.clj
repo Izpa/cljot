@@ -5,31 +5,34 @@
    [taoensso.timbre :as log]
    [telegrambot-lib.core :as tbot]))
 
-(defmethod ig/init-key ::msg-handler [_ {:keys [bot courier-chat-id]}]
+(defmethod ig/init-key ::msg-handler [_ {:keys [bot courier-chat-id enabled?]}]
   (fn [{{:keys [first_name last_name username]} :from
         {:keys [id]} :chat
         :keys [text]
         :as msg}]
     (log/info "Received bot message " msg)
-    (when (< 0 id)
-      (let [{:keys [ok]
-             {:keys [message_id]} :result} (tbot/send-message bot
-                                                              courier-chat-id
-                                                              (str "Новый заказ от "
-                                                                   first_name
-                                                                   " "
-                                                                   last_name
-                                                                   " (@"
-                                                                   username
-                                                                   "):\n"
-                                                                   text))
-            _ (tbot/pin-chat-message bot courier-chat-id message_id)
-            requester-answer (tbot/send-message bot
-                                                id
-                                                (if ok
-                                                  "Ваш заказ принят! Пожалуйста, ожидайте"
-                                                  "Что-то пошло не так, скажите Максу или Паше, чтобы пнули Артёма"))]
-        (log/info requester-answer)))))
+    (try (when enabled?
+           (when (< 0 id)
+             (let [{:keys [ok]
+                    {:keys [message_id]} :result} (tbot/send-message bot
+                                                                     courier-chat-id
+                                                                     (str "Новый заказ от "
+                                                                          first_name
+                                                                          " "
+                                                                          last_name
+                                                                          " (@"
+                                                                          username
+                                                                          "):\n"
+                                                                          text))
+                   _ (tbot/pin-chat-message bot courier-chat-id message_id)
+                   requester-answer (tbot/send-message bot
+                                                       id
+                                                       (if ok
+                                                         "Ваш заказ принят! Пожалуйста, ожидайте"
+                                                         "Что-то пошло не так, скажите Максу или Паше, чтобы пнули Артёма"))]
+               (log/info requester-answer))))
+         (catch Exception e
+           (log/error "Catch exception " e)))))
 
 (defn start-telegram-bot
   [bot url long-polling-config msg-handler]

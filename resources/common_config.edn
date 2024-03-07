@@ -3,6 +3,7 @@
 
          :telegram-bot/msg-handler
          {:bot #ig/ref :telegram-bot/client
+          :enabled? #env BOT_ENABLED
           :courier-chat-id #env "COURIER_CHAT_ID"}
 
          :telegram-bot/run-client
