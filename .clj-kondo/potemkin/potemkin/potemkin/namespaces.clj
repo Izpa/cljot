@@ -1,5 +1,6 @@
 (ns potemkin.namespaces
-  (:require [clj-kondo.hooks-api :as api]))
+  (:require
+   [clj-kondo.hooks-api :as api]))
 
 (defn import-macro*
   ([sym]
@@ -7,17 +8,23 @@
   ([sym name]
    `(def ~name ~sym)))
 
+#_{:clj-kondo/ignore [:clojure-lsp/unused-public-var]}
+
 (defmacro import-fn
   ([sym]
    (import-macro* sym))
   ([sym name]
    (import-macro* sym name)))
 
+#_{:clj-kondo/ignore [:clojure-lsp/unused-public-var]}
+
 (defmacro import-macro
   ([sym]
    (import-macro* sym))
   ([sym name]
    (import-macro* sym name)))
+
+#_{:clj-kondo/ignore [:clojure-lsp/unused-public-var]}
 
 (defmacro import-def
   ([sym]

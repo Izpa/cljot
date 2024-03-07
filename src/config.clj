@@ -29,10 +29,7 @@
 
 (defn init-and-hide-integrant-secrets-in-exception
   [cfg]
-  (try (ig/init cfg)
-       (catch clojure.lang.ExceptionInfo e
-         (log/error "Integrant init error" (e->ex-data-with-hidden-secrets e))
-         (throw (ex-info (ex-message e) (e->ex-data-with-hidden-secrets e))))))
+  (ig/init cfg))
 
 (defn init!
   ([] (init! :default))
