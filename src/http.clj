@@ -1,16 +1,19 @@
 (ns http
   (:require
+   [cheshire.core :as json]
    [integrant.core :as ig]
    [org.httpkit.server :as hk-server]
    [taoensso.timbre :as log]
    [utils :refer [->num]]))
 
-(defmethod ig/init-key ::handler [_ _msg-handler]
+(defmethod ig/init-key ::handler [_ msg-handler]
   #(do
      (-> %
          :body
          slurp
-         println)
+         :message
+         (json/parse-string true)
+         msg-handler)
      {:status  200
       :headers {"Content-Type" "text/html"}}))
 
