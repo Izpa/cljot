@@ -5,8 +5,25 @@
    [taoensso.timbre :as log]
    [telegrambot-lib.core :as tbot]))
 
-(defmethod ig/init-key ::msg-handler [_ {:keys [_bot _courier-chat-id]}]
-  println)
+(defmethod ig/init-key ::msg-handler [_ {:keys [bot courier-chat-id]}]
+  (fn [{{:keys [first_name last_name username]} :from
+        {:keys [id]} :chat
+        :keys [text]
+        :as msg}]
+    (log/info "Received bot message " msg)
+    (when (< 0 id)
+      (let [courier-notification (tbot/send-message courier-chat-id
+                                           "Новый заказ от "
+                                           first_name
+                                           " "
+                                           last_name
+                                           " (@"
+                                           username
+                                           ")\n"
+                                           text)
+            requester-answer (tbot/send-message id "Ваш заказ принят! Пожалуйста, ожидайте")]
+        (log/info courier-notification)
+        (log/info requester-answer)))))
 
 (defn start-telegram-bot
   [bot url long-polling-config msg-handler]
