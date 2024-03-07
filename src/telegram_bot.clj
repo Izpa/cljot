@@ -9,9 +9,9 @@
   println)
 
 (defn start-telegram-bot
-  [bot url long-polling-config message-handler]
+  [bot url long-polling-config msg-handler]
   (if (nil? url)
-    {:thread (long-polling bot long-polling-config message-handler)}
+    {:thread (long-polling bot long-polling-config msg-handler)}
     {:webhook (tbot/set-webhook bot {:url url
                                      :content-type :multipart})}))
 
@@ -25,8 +25,8 @@
 (defmethod ig/init-key ::run-client [_ {:keys [bot
                                                url
                                                long-polling-config
-                                               message-handler]}]
-  (start-telegram-bot bot url long-polling-config message-handler))
+                                               msg-handler]}]
+  (start-telegram-bot bot url long-polling-config msg-handler))
 
 (defmethod ig/init-key ::client [_ {:keys [token]}]
   (log/info "Start client-bot")

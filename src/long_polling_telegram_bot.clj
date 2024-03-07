@@ -16,7 +16,7 @@
        resp))))
 
 (defn long-polling
-  [bot config handle-message]
+  [bot config msg-handler]
   (log/info "Long polling with timeout " config)
   (let [update-id (atom nil)
         set-id! #(reset! update-id %)
@@ -25,7 +25,7 @@
                            (let [updates (poll-updates bot config @update-id)
                                  messages (:result updates)]
                              (doseq [msg messages]
-                               (handle-message (:message msg))
+                               (msg-handler (:message msg))
                                (-> msg
                                    :update_id
                                    inc

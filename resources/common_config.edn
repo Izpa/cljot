@@ -8,6 +8,7 @@
          :telegram-bot/run-client
          {:bot #ig/ref :telegram-bot/client
           :url #env "SELF_URL"
+          :msg-handler #ig/ref :telegram-bot/msg-handler 
           :long-polling-config {:timeout #or [#env "CLIENT_BOT_LONG_POLLING_TIMEOUT" 10]
                                 :sleep #or [#env "CLIENT_BOT_LONG_POLLING_SLEEP" 1000]}}
 
