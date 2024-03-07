@@ -26,13 +26,7 @@
                  _ (tbot/pin-chat-message bot courier-chat-id message_id)
                  requester-answer (tbot/send-message bot
                                                      id
-                                                     (if ok
-                                                       (if (= text "/start")
-                                                         "Дождитесь объявления о начале приёма заказов и просто напишите ваше пожелание сюда)"
-                                                         (if enabled? 
-                                                           "Ваш заказ принят! Пожалуйста, ожидайте"
-                                                           "Пока ещё не работаем, ожидайте)"))
-                                                       "Что-то пошло не так, скажите Максу или Паше, чтобы пнули Артёма"))]
+                                                     "Всем спасибо, больше заказы не принимаем)")]
              (log/info requester-answer)))
          (catch Exception e
            (log/error "Catch exception " e)))))
