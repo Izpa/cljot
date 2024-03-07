@@ -12,16 +12,19 @@
         :as msg}]
     (log/info "Received bot message " msg)
     (when (< 0 id)
-      (let [courier-notification (tbot/send-message courier-chat-id
-                                           "Новый заказ от "
-                                           first_name
-                                           " "
-                                           last_name
-                                           " (@"
-                                           username
-                                           ")\n"
-                                           text)
-            requester-answer (tbot/send-message id "Ваш заказ принят! Пожалуйста, ожидайте")]
+      (let [courier-notification (tbot/send-message bot
+                                                    courier-chat-id
+                                                    "Новый заказ от "
+                                                    first_name
+                                                    " "
+                                                    last_name
+                                                    " (@"
+                                                    username
+                                                    ")\n"
+                                                    text)
+            requester-answer (tbot/send-message bot
+                                                id
+                                                "Ваш заказ принят! Пожалуйста, ожидайте")]
         (log/info courier-notification)
         (log/info requester-answer)))))
 
