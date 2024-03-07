@@ -9,6 +9,7 @@
   #(do
      (-> %
          :body
+         slurp
          println)
      {:status  200
       :headers {"Content-Type" "text/html"}}))
