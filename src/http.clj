@@ -7,10 +7,11 @@
 
 (defmethod ig/init-key ::handler [_ _msg-handler]
   #(do
-     (println %)
+     (-> %
+         :body
+         println)
      {:status  200
-      :headers {"Content-Type" "text/html"}
-      :body    "hello HTTP!"}))
+      :headers {"Content-Type" "text/html"}}))
 
 (defmethod ig/init-key ::server [_ {:keys [handler port]}]
   (log/info "Start http-server")
