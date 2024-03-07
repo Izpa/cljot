@@ -11,26 +11,29 @@
         :keys [text]
         :as msg}]
     (log/info "Received bot message " msg)
-    (try (when enabled?
-           (when (< 0 id)
-             (let [{:keys [ok]
-                    {:keys [message_id]} :result} (tbot/send-message bot
-                                                                     courier-chat-id
-                                                                     (str "Новый заказ от "
-                                                                          first_name
-                                                                          " "
-                                                                          last_name
-                                                                          " (@"
-                                                                          username
-                                                                          "):\n"
-                                                                          text))
-                   _ (tbot/pin-chat-message bot courier-chat-id message_id)
-                   requester-answer (tbot/send-message bot
-                                                       id
-                                                       (if ok
-                                                         "Ваш заказ принят! Пожалуйста, ожидайте"
-                                                         "Что-то пошло не так, скажите Максу или Паше, чтобы пнули Артёма"))]
-               (log/info requester-answer))))
+    (try (when (< 0 id)
+           (let [{:keys [ok]
+                  {:keys [message_id]} :result} (tbot/send-message bot
+                                                                   courier-chat-id
+                                                                   (str "Новый заказ от "
+                                                                        first_name
+                                                                        " "
+                                                                        last_name
+                                                                        " (@"
+                                                                        username
+                                                                        "):\n"
+                                                                        text))
+                 _ (tbot/pin-chat-message bot courier-chat-id message_id)
+                 requester-answer (tbot/send-message bot
+                                                     id
+                                                     (if ok
+                                                       (if (= text "/start")
+                                                         "Дождитесь объявления о начале приёма заказов и просто напишите ваше пожелание сюда)"
+                                                         (if enabled? 
+                                                           "Ваш заказ принят! Пожалуйста, ожидайте"
+                                                           "Пока ещё не работаем, ожидайте)"))
+                                                       "Что-то пошло не так, скажите Максу или Паше, чтобы пнули Артёма"))]
+             (log/info requester-answer)))
          (catch Exception e
            (log/error "Catch exception " e)))))
 
