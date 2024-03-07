@@ -12,20 +12,23 @@
         :as msg}]
     (log/info "Received bot message " msg)
     (when (< 0 id)
-      (let [courier-notification (tbot/send-message bot
-                                                    courier-chat-id
-                                                    (str "Новый заказ от "
-                                                         first_name
-                                                         " "
-                                                         last_name
-                                                         " (@"
-                                                         username
-                                                         ")\n"
-                                                         text))
+      (let [{:keys [ok]
+             {:keys [message_id]} :result} (tbot/send-message bot
+                                                              courier-chat-id
+                                                              (str "Новый заказ от "
+                                                                   first_name
+                                                                   " "
+                                                                   last_name
+                                                                   " (@"
+                                                                   username
+                                                                   "):\n"
+                                                                   text))
+            _ (tbot/pin-chat-message courier-chat-id message_id)
             requester-answer (tbot/send-message bot
                                                 id
-                                                "Ваш заказ принят! Пожалуйста, ожидайте")]
-        (log/info courier-notification)
+                                                (if ok
+                                                  "Ваш заказ принят! Пожалуйста, ожидайте"
+                                                  "Что-то пошло не так, скажите Максу или Паше, чтобы пнули Артёма"))]
         (log/info requester-answer)))))
 
 (defn start-telegram-bot
