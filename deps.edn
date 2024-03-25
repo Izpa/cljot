@@ -33,7 +33,7 @@
    :main-opts ["-m" "clj-check.check"]}
 
   :kondo
-  {:extra-deps {clj-kondo/clj-kondo {:mvn/version "2023.12.15"}}
+  {:extra-deps {clj-kondo/clj-kondo {:mvn/version "2024.03.13"}}
    :main-opts ["-m" "clj-kondo.main" "--lint" "--cache false"]}
 
   :kibit
