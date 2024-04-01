@@ -2,7 +2,7 @@
  ["src" "cljs" "resources"]
  
  :deps
- {org.clojure/clojure {:mvn/version "1.12.0-alpha5"}
+ {org.clojure/clojure {:mvn/version "1.12.0-alpha9"}
   clojure.java-time/clojure.java-time {:mvn/version "1.4.2"} ; datetime
   com.taoensso/timbre {:mvn/version "6.5.0"} ; log
   metosin/malli {:mvn/version "0.15.0"} ; schema 
