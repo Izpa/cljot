@@ -32,102 +32,110 @@
              answer-additional-contnent
              button-ids))
 
+(defonce orders (atom {}))
+
+(defn command->dialogue
+  [bot chat-id content options]
+  (log/info "Start new order" {:chat-id chat-id})
+  (swap! orders assoc chat-id {})
+  (tbot/send-message bot chat-id content options))
+
 (def cmds
-  [(->command {:command-id :default
-               :button-text ""
-               :answer-main-content "TODO не понял вас"
-               :button-ids [:main]})
-   (->command {:command-id :main
-               :button-text "Вернуться на главную"
-               :answer-main-content "Здравствуйте! Я — чат-бот мебельной фабрики «Мария», ваш персональный помощник в мире кухонь и мебели для всего дома.
-  <b>Чем я могу вам помочь сегодня?</b>"
-               :button-ids [:examples
-                            :order
-                            :promotions]})
-   (->command {:command-id :examples
-               :button-text "Посмотреть примеры реализованных проектов"
-               :answer-main-content "С удовольствием покажу вам примеры кухонь.
+  [{:command-id :default
+    :button-text ""
+    :answer-main-content "TODO не понял вас"
+    :button-ids [:main]}
+   {:command-id :main
+    :button-text "Вернуться на главную"
+    :answer-main-content "Здравствуйте! Я — чат-бот мебельной фабрики «Мария», ваш персональный помощник в мире кухонь и мебели для всего дома.
+<b>Чем я могу вам помочь сегодня?</b>"
+    :button-ids [:examples
+                 :order
+                 :promotions]}
+   {:command-id :examples
+    :button-text "Посмотреть примеры реализованных проектов"
+    :answer-main-content "С удовольствием покажу вам примеры кухонь.
   
-  <b>Наши кухни — это:</b>
-  ♦Стильные и современные решения
-  ♦Функциональность и комфорт
-  ♦Материалы высокого качества
-  ♦Но также с выгодными акциями (например, на встроенную технику)
+<b>Наши кухни — это:</b>
+♦Стильные и современные решения
+♦Функциональность и комфорт
+♦Материалы высокого качества
+♦Но также с выгодными акциями (например, на встроенную технику)
   
-  <b>Какой стиль вас интересует?</b>"
-               :button-ids [:modern-example
-                            :neoclassic-example
-                            :classic-example
-                            :main]})
-   (->command {:command-id :modern-example
-               :button-text "Современный стиль"
-               :answer-fn tbot/send-photo
-               :answer-main-content "AgACAgIAAxkBAAIEEGaSuGFOD_4DudPc_z0CYp4zPf7vAALY2TEbz0WQSCQ0sJmbBHQ8AQADAgADbQADNQQ"
-               :button-ids [:neoclassic-example
-                            :classic-example
-                            :order
-                            :main]})
-   (->command {:command-id :neoclassic-example
-               :button-text "Неоклассический стиль"
-               :answer-fn tbot/send-photo
-               :answer-main-content "AgACAgIAAxkBAAIEH2aSu3HMmWzi859JMhuVV4-oPUcRAAIz4DEb4ceQSB5dNSH0a9fPAQADAgADeQADNQQ"
-               :button-ids [:modern-example
-                            :classic-example
-                            :order
-                            :main]})
-   (->command {:command-id :classic-example
-               :button-text "Классический стиль"
-               :answer-fn tbot/send-photo
-               :answer-main-content "AgACAgIAAxkBAAIEIWaSvDsfRblbSOjO87ait3qRvafQAAIj2jEbz0WQSLrtCi_PolHMAQADAgADeQADNQQ"
-               :button-ids [:modern-example
-                            :neoclassic-example
-                            :order
-                            :main]})
-   (->command {:command-id :promotions
-               :button-text "Узнать о скидках и акциях"
-               :answer-main-content "<b>Покупать кухни в «Мария» выгодно!</b>
+<b>Какой стиль вас интересует?</b>"
+    :button-ids [:modern-example
+                 :neoclassic-example
+                 :classic-example
+                 :main]}
+   {:command-id :modern-example
+    :button-text "Современный стиль"
+    :answer-fn tbot/send-photo
+    :answer-main-content "AgACAgIAAxkBAAIEEGaSuGFOD_4DudPc_z0CYp4zPf7vAALY2TEbz0WQSCQ0sJmbBHQ8AQADAgADbQADNQQ"
+    :button-ids [:neoclassic-example
+                 :classic-example
+                 :order
+                 :main]}
+   {:command-id :neoclassic-example
+    :button-text "Неоклассический стиль"
+    :answer-fn tbot/send-photo
+    :answer-main-content "AgACAgIAAxkBAAIEH2aSu3HMmWzi859JMhuVV4-oPUcRAAIz4DEb4ceQSB5dNSH0a9fPAQADAgADeQADNQQ"
+    :button-ids [:modern-example
+                 :classic-example
+                 :order
+                 :main]}
+   {:command-id :classic-example
+    :button-text "Классический стиль"
+    :answer-fn tbot/send-photo
+    :answer-main-content "AgACAgIAAxkBAAIEIWaSvDsfRblbSOjO87ait3qRvafQAAIj2jEbz0WQSLrtCi_PolHMAQADAgADeQADNQQ"
+    :button-ids [:modern-example
+                 :neoclassic-example
+                 :order
+                 :main]}
+   {:command-id :promotions
+    :button-text "Узнать о скидках и акциях"
+    :answer-main-content "<b>Покупать кухни в «Мария» выгодно!</b>
 
 Каждый месяц мы предлагаем нашим клиентам выгодные акции: скидки и подарки. Причем все акции суммируются.
 
 <b>Узнайте больше о наших предложениях:</b>"
-               :button-ids [:table
-                            :technic
-                            :installment
-                            :order
-                            :main]})
-   (->command {:command-id :table
-               :button-text "Скидка на столешницы до 80%"
-               :answer-fn tbot/send-photo
-               :answer-main-content "AgACAgIAAxkBAAIEMWaSvqzFjuCAwEuZNF8ZFvFEsFOXAAI12jEbz0WQSIrnDJx8ZhBEAQADAgADeQADNQQ"
-               :answer-additional-contnent {:caption "<b>Скидка на столешницы до 80%</b>
+    :button-ids [:table
+                 :technic
+                 :installment
+                 :order
+                 :main]}
+   {:command-id :table
+    :button-text "Скидка на столешницы до 80%"
+    :answer-fn tbot/send-photo
+    :answer-main-content "AgACAgIAAxkBAAIEMWaSvqzFjuCAwEuZNF8ZFvFEsFOXAAI12jEbz0WQSIrnDJx8ZhBEAQADAgADeQADNQQ"
+    :answer-additional-contnent {:caption "<b>Скидка на столешницы до 80%</b>
 Получайте удовольствие от готовки на новой кухне «Мария»! А мы создадим невероятно стильное и удобное рабочее пространство со столешницей из искусственного камня со скидкой до 80 %."}
-               :button-ids [:technic
-                            :installment
-                            :order
-                            :main]})
-   (->command {:command-id :installment
-               :button-text "Рассрочка 0% на 12 месяцев"
-               :answer-fn tbot/send-photo
-               :answer-main-content "AgACAgIAAxkBAAIENmaSv9guYneFiswaycal9dxUgyFAAALy1zEbz0WQSCcBPzCl0touAQADAgADeQADNQQ"
-               :answer-additional-contnent {:caption "<b>Рассрочка 0% на 12 месяцев</b>
+    :button-ids [:technic
+                 :installment
+                 :order
+                 :main]}
+   {:command-id :installment
+    :button-text "Рассрочка 0% на 12 месяцев"
+    :answer-fn tbot/send-photo
+    :answer-main-content "AgACAgIAAxkBAAIENmaSv9guYneFiswaycal9dxUgyFAAALy1zEbz0WQSCcBPzCl0touAQADAgADeQADNQQ"
+    :answer-additional-contnent {:caption "<b>Рассрочка 0% на 12 месяцев</b>
 без первоначального взноса и переплаты. А также предложим выгодные условия по субсидированной рассрочке до 36 месяцев."}
-               :button-ids [:table
-                            :technic
-                            :order
-                            :main]})
-   (->command {:command-id :technic
-               :button-text "Техника в подарок"
-               :answer-fn tbot/send-photo
-               :answer-main-content "AgACAgIAAxkBAAIEOGaSwSBP7LtD2x-kca3zUh7GmMbuAAJE2jEbz0WQSDSi7WNjJF4oAQADAgADeAADNQQ"
-               :answer-additional-contnent {:caption "<b>Техника в подарок</b>
+    :button-ids [:table
+                 :technic
+                 :order
+                 :main]}
+   {:command-id :technic
+    :button-text "Техника в подарок"
+    :answer-fn tbot/send-photo
+    :answer-main-content "AgACAgIAAxkBAAIEOGaSwSBP7LtD2x-kca3zUh7GmMbuAAJE2jEbz0WQSDSi7WNjJF4oAQADAgADeAADNQQ"
+    :answer-additional-contnent {:caption "<b>Техника в подарок</b>
 Только по 31 июля дарим посудомоечную машину при покупке кухни «Мария» и двух единиц встраиваемой техники брендов Korting, Kuppersberg, Krona, Haier, Graude, Smeg или Hotpoint. Количество подарков ограниченное – успейте забрать свой!"}
-               :button-ids [:table
-                            :installment
-                            :order
-                            :main]})
-   (->command {:command-id :order
-               :button-text "Получить бесплатный дизайн-проект"
-               :answer-main-content "Создайте кухню своей мечты вместе с нашими дизайнерами! ‍
+    :button-ids [:table
+                 :installment
+                 :order
+                 :main]}
+   {:command-id :order
+    :button-text "Получить бесплатный дизайн-проект"
+    :answer-main-content "Создайте кухню своей мечты вместе с нашими дизайнерами! ‍
 
 Мы предлагаем вам бесплатный дизайн-проект кухни, который поможет определиться с выбором. Наш дизайнер учтёт все ваши пожелания и предложит оптимальный вариант.
 
@@ -138,7 +146,12 @@
 ♦Полезные советы и рекомендации
 
 <b>Для получения бесплатного дизайн-проекта, необходимо ответить на 3 вопроса.</b>"
-               :button-ids [:main]})])
+    :button-ids [:start-order
+                 :main]}
+   {:command-id :start-order
+    :button-text "Оставить заявку"
+    :answer-main-content "Укажите, пожалуйста, ваше имя"
+    :answer-fn command->dialogue}])
 
 (defn command->key-val
   [command]
@@ -146,7 +159,7 @@
 
 (def commands
   (into {}
-        (mapv command->key-val cmds)))
+        (mapv (comp command->key-val ->command) cmds)))
 
 (defn ->answer
   [commands bot command-id chat-id]
@@ -159,15 +172,48 @@
                  chat-id
                  answer-main-content
                  (merge {:reply_markup {:inline_keyboard (mapv (fn [button-id]
-                                                                 [{:text (->> button-id
-                                                                              (get commands)
-                                                                              :button-text)
+                                                                 [{:text (get-in commands [button-id :button-text])
                                                                    :callback_data (name button-id)}])
                                                                button-ids)}
                          :parse_mode "HTML"}
                         answer-additional-contnent))
       (throw (ex-info "Unexisted command-id"
                       {:command-id command-id})))))
+
+(defn continue-dialogue
+  [bot {{:keys [id]} :chat
+        :keys [text]
+        :as msg}]
+  (let [{:keys [nam
+                city
+                phone]} (get @orders id)
+        answer (partial tbot/send-message bot id)]
+    (cond
+      (nil? nam) (if true
+                    (do
+                      (swap! orders assoc-in [id :nam] text)
+                      (answer "Укажите, пожалуйста, ваш город"))
+                    (answer "Укажите, пожалуйста, ваше имя"))
+      (nil? city) (if true
+                    (do
+                      (swap! orders assoc-in [id :city] text)
+                      (answer "Укажите, пожалуйста, ваш телефон"))
+                    (answer "Укажите, пожалуйста, ваш город"))
+      (nil? phone) (if true
+                     (let [order (-> @orders
+                                     (get id)
+                                     (assoc :phone text))]
+                       (log/info "New order" order)
+                       (swap! orders dissoc id)
+                       (answer "<b>Спасибо за заявку!</b>
+
+Наш менеджер свяжется с вами в ближайшее время, чтобы обсудить детали вашего дизайн-проекта и помочь вам максимально выгодно приобрести кухню вашей мечты.
+
+<b>Вдохновения вам и скорейшего завершения ремонта!💫</b>"
+                               {:reply_markup {:inline_keyboard [[{:text (get-in commands [:main :button-text])
+                                                                   :callback_data (name :main)}]]}
+                                :parse_mode "HTML"}))
+                     (answer "Укажите, пожалуйста, ваш телефон")))))
 
 (defn bot+msg->answer
   [bot msg]
@@ -177,7 +223,9 @@
                      (keyword data)
                      :default)]
     (when (> id 0)
-      (->answer commands bot command-id id))))
+      (if (get @orders id)
+        (continue-dialogue bot msg)
+        (->answer commands bot command-id id)))))
 
 (defn msg-handler
   [bot {:keys [message callback_query] :as upd}]
