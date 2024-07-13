@@ -32,50 +32,73 @@
              answer-additional-contnent
              button-ids))
 
+(def cmds
+  [(->command {:command-id :default
+               :button-text ""
+               :answer-main-content "TODO не понял вас"
+               :button-ids [:main]})
+   (->command {:command-id :main
+               :button-text "Вернуться на главную"
+               :answer-main-content "Здравствуйте! Я — чат-бот мебельной фабрики «Мария», ваш персональный помощник в мире кухонь и мебели для всего дома.
+  <b>Чем я могу вам помочь сегодня?</b>"
+               :button-ids [:examples
+                            :order
+                            :promotions]})
+   (->command {:command-id :examples
+               :button-text "Посмотреть примеры реализованных проектов"
+               :answer-main-content "С удовольствием покажу вам примеры кухонь.
+  
+  <b>Наши кухни — это:</b>
+  ♦Стильные и современные решения
+  ♦Функциональность и комфорт
+  ♦Материалы высокого качества
+  ♦Но также с выгодными акциями (например, на встроенную технику)
+  
+  <b>Какой стиль вас интересует?</b>"
+               :button-ids [:modern-example
+                            :neoclassic-example
+                            :classic-example
+                            :main]})
+   (->command {:command-id :modern-example
+               :button-text "Современный стиль"
+               :answer-fn tbot/send-photo
+               :answer-main-content "AgACAgIAAxkBAAIEEGaSuGFOD_4DudPc_z0CYp4zPf7vAALY2TEbz0WQSCQ0sJmbBHQ8AQADAgADbQADNQQ"
+               :button-ids [:neoclassic-example
+                            :classic-example
+                            :order
+                            :main]})
+   (->command {:command-id :neoclassic-example
+               :button-text "Неоклассический стиль"
+               :answer-fn tbot/send-photo
+               :answer-main-content "AgACAgIAAxkBAAIEH2aSu3HMmWzi859JMhuVV4-oPUcRAAIz4DEb4ceQSB5dNSH0a9fPAQADAgADeQADNQQ" 
+               :button-ids [:modern-example
+                            :classic-example
+                            :order
+                            :main]})
+   (->command {:command-id :classic-example
+               :button-text "Классический стиль"
+               :answer-fn tbot/send-photo
+               :answer-main-content "AgACAgIAAxkBAAIEIWaSvDsfRblbSOjO87ait3qRvafQAAIj2jEbz0WQSLrtCi_PolHMAQADAgADeQADNQQ"
+               :button-ids [:modern-example
+                            :neoclassic-example
+                            :order
+                            :main]})
+   (->command {:command-id :order
+               :button-text "Получить бесплатный дизайн-проект"
+               :answer-main-content "TODO"
+               :button-ids [:main]})
+   (->command {:command-id :promotions
+               :button-text "Узнать о скидках и акциях"
+               :answer-main-content "TODO"
+               :button-ids [:main]})])
+
 (defn command->key-val
   [command]
   [(:command-id command) command])
 
 (def commands
   (into {}
-        (mapv command->key-val
-              [(->command {:command-id :default
-                           :button-text ""
-                           :answer-main-content "TODO не понял вас"
-                           :button-ids [:main]})
-               (->command {:command-id :main
-                           :button-text "Вернуться на главную"
-                           :answer-main-content "Здравствуйте! Я — чат-бот мебельной фабрики «Мария», ваш персональный помощник в мире кухонь и мебели для всего дома.
-<b>Чем я могу вам помочь сегодня?</b>"
-                           :button-ids [:examples
-                                        :order
-                                        :promotions]})
-               (->command {:command-id :examples
-                           :button-text "Посмотреть примеры реализованных проектов"
-                           :answer-main-content "С удовольствием покажу вам примеры кухонь.
-
-<b>Наши кухни — это:</b>
-♦Стильные и современные решения
-♦Функциональность и комфорт
-♦Материалы высокого качества
-♦Но также с выгодными акциями (например, на встроенную технику)
-
-<b>Какой стиль вас интересует?</b>"
-                           :button-ids [:modern-example
-                                        :main]})
-               (->command {:command-id :modern-example
-                           :button-text "Современный стиль"
-                           :answer-fn tbot/send-photo
-                           :answer-main-content "AgACAgIAAxkBAAIEEGaSuGFOD_4DudPc_z0CYp4zPf7vAALY2TEbz0WQSCQ0sJmbBHQ8AQADAgADbQADNQQ"
-                           :button-ids [:main]})
-               (->command {:command-id :order
-                           :button-text "Получить бесплатный дизайн-проект"
-                           :answer-main-content "TODO"
-                           :button-ids [:main]})
-               (->command {:command-id :promotions
-                           :button-text "Узнать о скидках и акциях"
-                           :answer-main-content "TODO"
-                           :button-ids [:main]})])))
+        (mapv command->key-val cmds)))
 
 (defn ->answer
   [commands bot command-id chat-id]
