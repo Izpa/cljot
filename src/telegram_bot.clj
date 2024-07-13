@@ -70,7 +70,7 @@
    (->command {:command-id :neoclassic-example
                :button-text "Неоклассический стиль"
                :answer-fn tbot/send-photo
-               :answer-main-content "AgACAgIAAxkBAAIEH2aSu3HMmWzi859JMhuVV4-oPUcRAAIz4DEb4ceQSB5dNSH0a9fPAQADAgADeQADNQQ" 
+               :answer-main-content "AgACAgIAAxkBAAIEH2aSu3HMmWzi859JMhuVV4-oPUcRAAIz4DEb4ceQSB5dNSH0a9fPAQADAgADeQADNQQ"
                :button-ids [:modern-example
                             :classic-example
                             :order
@@ -83,13 +83,61 @@
                             :neoclassic-example
                             :order
                             :main]})
-   (->command {:command-id :order
-               :button-text "Получить бесплатный дизайн-проект"
-               :answer-main-content "TODO"
-               :button-ids [:main]})
    (->command {:command-id :promotions
                :button-text "Узнать о скидках и акциях"
-               :answer-main-content "TODO"
+               :answer-main-content "<b>Покупать кухни в «Мария» выгодно!</b>
+
+Каждый месяц мы предлагаем нашим клиентам выгодные акции: скидки и подарки. Причем все акции суммируются.
+
+<b>Узнайте больше о наших предложениях:</b>"
+               :button-ids [:table
+                            :technic
+                            :installment
+                            :order
+                            :main]})
+   (->command {:command-id :table
+               :button-text "Скидка на столешницы до 80%"
+               :answer-fn tbot/send-photo
+               :answer-main-content "AgACAgIAAxkBAAIEMWaSvqzFjuCAwEuZNF8ZFvFEsFOXAAI12jEbz0WQSIrnDJx8ZhBEAQADAgADeQADNQQ"
+               :answer-additional-contnent {:caption "<b>Скидка на столешницы до 80%</b>
+Получайте удовольствие от готовки на новой кухне «Мария»! А мы создадим невероятно стильное и удобное рабочее пространство со столешницей из искусственного камня со скидкой до 80 %."}
+               :button-ids [:technic
+                            :installment
+                            :order
+                            :main]})
+   (->command {:command-id :installment
+               :button-text "Рассрочка 0% на 12 месяцев"
+               :answer-fn tbot/send-photo
+               :answer-main-content "AgACAgIAAxkBAAIENmaSv9guYneFiswaycal9dxUgyFAAALy1zEbz0WQSCcBPzCl0touAQADAgADeQADNQQ"
+               :answer-additional-contnent {:caption "<b>Рассрочка 0% на 12 месяцев</b>
+без первоначального взноса и переплаты. А также предложим выгодные условия по субсидированной рассрочке до 36 месяцев."}
+               :button-ids [:table
+                            :technic
+                            :order
+                            :main]})
+   (->command {:command-id :technic
+               :button-text "Техника в подарок"
+               :answer-fn tbot/send-photo
+               :answer-main-content "AgACAgIAAxkBAAIEOGaSwSBP7LtD2x-kca3zUh7GmMbuAAJE2jEbz0WQSDSi7WNjJF4oAQADAgADeAADNQQ"
+               :answer-additional-contnent {:caption "<b>Техника в подарок</b>
+Только по 31 июля дарим посудомоечную машину при покупке кухни «Мария» и двух единиц встраиваемой техники брендов Korting, Kuppersberg, Krona, Haier, Graude, Smeg или Hotpoint. Количество подарков ограниченное – успейте забрать свой!"}
+               :button-ids [:table
+                            :installment
+                            :order
+                            :main]})
+   (->command {:command-id :order
+               :button-text "Получить бесплатный дизайн-проект"
+               :answer-main-content "Создайте кухню своей мечты вместе с нашими дизайнерами! ‍
+
+Мы предлагаем вам бесплатный дизайн-проект кухни, который поможет определиться с выбором. Наш дизайнер учтёт все ваши пожелания и предложит оптимальный вариант.
+
+<b>Бесплатный дизайн-проект включает:</b>
+♦Профессиональную  визуализацию мебели
+♦Индивидуальный подбор материалов и техники
+♦Расчет стоимости кухни
+♦Полезные советы и рекомендации
+
+<b>Для получения бесплатного дизайн-проекта, необходимо ответить на 3 вопроса.</b>"
                :button-ids [:main]})])
 
 (defn command->key-val
