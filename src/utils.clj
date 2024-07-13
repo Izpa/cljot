@@ -1,4 +1,9 @@
-(ns utils)
+(ns utils
+  (:require [clojure.pprint :as pprint]))
+
+(defn pformat [& args]
+  (with-out-str
+    (apply pprint/pprint args)))
 
 (defn ->num
   "The report number reads differently in different cases.

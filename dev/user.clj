@@ -13,19 +13,19 @@
                                :modify
                                :delete]
                  :bootstrap (fn [path]
-                              (println "Starting to watch " path)
-                              (binding [*ns* *ns*]
-                                (igr/reset)))
+                              (println "Starting to watch " path))
                  :callback (fn [event filename]
-                             (println event filename))
+                             (println event filename)
+                             (binding [*ns* *ns*]
+                               (igr/reset)))
                  :options {:recursive true}}]))
 
 
 (comment
   (System/getenv "CLIENT_BOT_TELEGRAM_TOKEN")
 
-  (def system (start!))
+  (def stop-system! (start!))
 
-  (system) ;;stop watch
+  (stop-system!) ;;stop watch
 
   (igr/halt))

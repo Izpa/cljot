@@ -3,27 +3,60 @@
    [integrant.core :as ig]
    [long-polling-telegram-bot :refer [long-polling]]
    [taoensso.timbre :as log]
-   [telegrambot-lib.core :as tbot]))
+   [telegrambot-lib.core :as tbot]
+   [utils :refer [pformat]]))
+
+(defrecord Command [command-id button-text answer-fn answer-content button-ids])
+
+(defn command->key-val
+  [command]
+  [(:command-id command) command])
+
+(def commands
+  (into {}
+        (mapv command->key-val
+              [(->Command :default
+                          "На главную"
+                          tbot/send-message
+                          "не понял вас" [])])))
+
+(defn ->answer
+  [commands bot command-id chat-id]
+  (let [{:keys [answer-fn
+                answer-content
+                button-ids]} (get commands command-id)]
+    (if answer-fn
+      (answer-fn bot
+                 chat-id
+                 answer-content
+                 {:reply_markup {:inline_keyboard [(mapv (fn [button-id]
+                                                           {:text (->> button-id
+                                                                       (get commands)
+                                                                       :button-text)
+                                                            :callback_data (name button-id)})
+                                                         button-ids)]}})
+      (throw (ex-info "Unexisted command-id"
+                      {:command-id command-id})))))
+
+(defn bot+msg->answer
+  [bot msg]
+  (let [{{:keys [id]} :chat
+         :keys [data]} msg
+        command-id (if data
+                     (keyword data)
+                     :default)]
+    (when (> id 0)
+      (->answer commands bot command-id id))))
 
 (defn msg-handler
   [bot {:keys [message callback_query] :as upd}]
-  (if-let [{{:keys [first_name last_name username]} :from
-         {:keys [id]} :chat
-         :keys [text]
-         :as msg}
-        (or message (:message callback_query))]
-    (do (log/info "Received update " msg)
-        (try (when (< 0 id)
-               (log/info "Answer: "
-                         (tbot/send-message bot
-                                            id
-                                            "test answer"
-                                            {:reply_markup {:inline_keyboard [[{:text "Button1"
-                                                                                :callback_data "1"}
-                                                                               {:text "Button2"
-                                                                                :callback_data "2"}]
-                                                                              [{:text "Button3"
-                                                                                :callback_data "3"}]]}})))
+  (if-let [msg (or message (-> callback_query
+                               :message
+                               (assoc :data (:data callback_query))))]
+    (do (log/info "Received message")
+        (log/info (pformat msg))
+        (try (log/info "Answer: "
+                       (bot+msg->answer bot msg))
              (catch Exception e
                (log/error "Catch exception " e))))
     (log/error "unexpected message type" {:msg upd})))
@@ -33,17 +66,22 @@
 
 (defn start-telegram-bot
   [bot url long-polling-config msg-handler]
-  (if (nil? url)
-    {:thread (long-polling bot long-polling-config msg-handler)}
-    {:webhook (tbot/set-webhook bot {:url url
-                                     :content-type :multipart})}))
+  (merge
+   {:bot bot}
+   (if (nil? url)
+     {:thread (long-polling bot long-polling-config msg-handler)}
+     {:webhook (tbot/set-webhook bot {:url url
+                                      :content-type :multipart})})))
 
 (defn stop-telegram-bot
-  [thread _webhook]
-  (when thread (.interrupt ^Thread thread)))
+  [thread bot]
+  (when thread
+    (log/info "Stop telegram bot")
+    (tbot/delete-webhook bot)
+    (.interrupt ^Thread thread)))
 
-(defmethod ig/halt-key! ::run-client [_ {:keys [thread url]}]
-  (stop-telegram-bot thread url))
+(defmethod ig/halt-key! ::run-client [_ {:keys [thread bot]}]
+  (stop-telegram-bot thread bot))
 
 (defmethod ig/init-key ::run-client [_ {:keys [bot
                                                url
