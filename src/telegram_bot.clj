@@ -6,7 +6,31 @@
    [telegrambot-lib.core :as tbot]
    [utils :refer [pformat]]))
 
-(defrecord Command [command-id button-text answer-fn answer-content button-ids])
+(defrecord Command [command-id
+                    button-text
+                    answer-fn
+                    answer-main-content
+                    answer-additional-contnent
+                    button-ids])
+
+(defn ->command
+  [{:keys [command-id
+           button-text
+           answer-fn
+           answer-main-content
+           answer-additional-contnent
+           button-ids]
+    :or {button-text "TODO"
+         answer-fn tbot/send-message
+         answer-main-content "TODO"
+         answer-additional-contnent {}
+         button-ids []}}]
+  (->Command command-id
+             button-text
+             answer-fn
+             answer-main-content
+             answer-additional-contnent
+             button-ids))
 
 (defn command->key-val
   [command]
@@ -15,26 +39,62 @@
 (def commands
   (into {}
         (mapv command->key-val
-              [(->Command :default
-                          "На главную"
-                          tbot/send-message
-                          "не понял вас" [])])))
+              [(->command {:command-id :default
+                           :button-text ""
+                           :answer-main-content "TODO не понял вас"
+                           :button-ids [:main]})
+               (->command {:command-id :main
+                           :button-text "Вернуться на главную"
+                           :answer-main-content "Здравствуйте! Я — чат-бот мебельной фабрики «Мария», ваш персональный помощник в мире кухонь и мебели для всего дома.
+<b>Чем я могу вам помочь сегодня?</b>"
+                           :button-ids [:examples
+                                        :order
+                                        :promotions]})
+               (->command {:command-id :examples
+                           :button-text "Посмотреть примеры реализованных проектов"
+                           :answer-main-content "С удовольствием покажу вам примеры кухонь.
+
+<b>Наши кухни — это:</b>
+♦Стильные и современные решения
+♦Функциональность и комфорт
+♦Материалы высокого качества
+♦Но также с выгодными акциями (например, на встроенную технику)
+
+<b>Какой стиль вас интересует?</b>"
+                           :button-ids [:modern-example
+                                        :main]})
+               (->command {:command-id :modern-example
+                           :button-text "Современный стиль"
+                           :answer-fn tbot/send-photo
+                           :answer-main-content "AgACAgIAAxkBAAIEEGaSuGFOD_4DudPc_z0CYp4zPf7vAALY2TEbz0WQSCQ0sJmbBHQ8AQADAgADbQADNQQ"
+                           :button-ids [:main]})
+               (->command {:command-id :order
+                           :button-text "Получить бесплатный дизайн-проект"
+                           :answer-main-content "TODO"
+                           :button-ids [:main]})
+               (->command {:command-id :promotions
+                           :button-text "Узнать о скидках и акциях"
+                           :answer-main-content "TODO"
+                           :button-ids [:main]})])))
 
 (defn ->answer
   [commands bot command-id chat-id]
   (let [{:keys [answer-fn
-                answer-content
+                answer-main-content
+                answer-additional-contnent
                 button-ids]} (get commands command-id)]
     (if answer-fn
       (answer-fn bot
                  chat-id
-                 answer-content
-                 {:reply_markup {:inline_keyboard [(mapv (fn [button-id]
-                                                           {:text (->> button-id
-                                                                       (get commands)
-                                                                       :button-text)
-                                                            :callback_data (name button-id)})
-                                                         button-ids)]}})
+                 answer-main-content
+                 (merge {:reply_markup {:inline_keyboard (mapv (fn [button-id]
+                                                                 [{:text (->> button-id
+                                                                              (get commands)
+                                                                              :button-text)
+                                                                   :callback_data (name button-id)}])
+                                                               button-ids)}
+                         :parse_mode "HTML"}
+                        answer-additional-contnent))
       (throw (ex-info "Unexisted command-id"
                       {:command-id command-id})))))
 
