@@ -4,9 +4,7 @@
    [aero.core :as aero]
    [clojure.java.io :as io]
    [clojure.string]
-   [integrant.core :as ig]
-   [taoensso.timbre :as log]
-   [utils :refer [e->ex-data-with-hidden-secrets]]))
+   [integrant.core :as ig]))
 
 (defmethod aero/reader 'ig/ref [_ _ value]
   (ig/ref value))
@@ -27,16 +25,19 @@
   (ig/load-namespaces cfg)
   cfg)
 
-(defn init-and-hide-integrant-secrets-in-exception
-  [cfg]
-  (try (ig/init cfg)
-       (catch clojure.lang.ExceptionInfo e
-         (log/error "Integrant init error" (e->ex-data-with-hidden-secrets e))
-         (throw (ex-info (ex-message e) (e->ex-data-with-hidden-secrets e))))))
+(defn prepare
+  ([] (prepare :default))
+  ([profile] (-> profile
+                 load-config
+                 load-namespaces)))
 
 (defn init!
   ([] (init! :default))
   ([profile]
-   (-> (load-config profile)
-       load-namespaces
-       init-and-hide-integrant-secrets-in-exception)))
+   (-> profile
+       prepare
+       ig/init)))
+
+(defn stop!
+  [system]
+  (ig/halt! system))

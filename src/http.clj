@@ -12,13 +12,12 @@
          :body
          slurp
          (json/parse-string true)
-         :message
          msg-handler)
      {:status  200
       :headers {"Content-Type" "text/html"}}))
 
 (defmethod ig/init-key ::server [_ {:keys [handler port]}]
-  (log/info "Start http-server")
+  (log/info "Start http-server on port " port)
   (hk-server/run-server handler {:port (->num port)}))
 
 (defmethod ig/halt-key! ::server [_ server]

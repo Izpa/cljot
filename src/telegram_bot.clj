@@ -5,31 +5,31 @@
    [taoensso.timbre :as log]
    [telegrambot-lib.core :as tbot]))
 
-(defmethod ig/init-key ::msg-handler [_ {:keys [bot courier-chat-id enabled?]}]
-  (fn [{{:keys [first_name last_name username]} :from
-        {:keys [id]} :chat
-        :keys [text]
-        :as msg}]
-    (log/info "Received bot message " msg)
-    (try (when (< 0 id)
-           (let [{:keys [ok]
-                  {:keys [message_id]} :result} (tbot/send-message bot
-                                                                   courier-chat-id
-                                                                   (str "Новый заказ от "
-                                                                        first_name
-                                                                        " "
-                                                                        last_name
-                                                                        " (@"
-                                                                        username
-                                                                        "):\n"
-                                                                        text))
-                 _ (tbot/pin-chat-message bot courier-chat-id message_id)
-                 requester-answer (tbot/send-message bot
-                                                     id
-                                                     "Всем спасибо, больше заказы не принимаем)")]
-             (log/info requester-answer)))
-         (catch Exception e
-           (log/error "Catch exception " e)))))
+(defn msg-handler
+  [bot {:keys [message callback_query] :as upd}]
+  (if-let [{{:keys [first_name last_name username]} :from
+         {:keys [id]} :chat
+         :keys [text]
+         :as msg}
+        (or message (:message callback_query))]
+    (do (log/info "Received update " msg)
+        (try (when (< 0 id)
+               (log/info "Answer: "
+                         (tbot/send-message bot
+                                            id
+                                            "test answer"
+                                            {:reply_markup {:inline_keyboard [[{:text "Button1"
+                                                                                :callback_data "1"}
+                                                                               {:text "Button2"
+                                                                                :callback_data "2"}]
+                                                                              [{:text "Button3"
+                                                                                :callback_data "3"}]]}})))
+             (catch Exception e
+               (log/error "Catch exception " e))))
+    (log/error "unexpected message type" {:msg upd})))
+
+(defmethod ig/init-key ::msg-handler [_ {:keys [bot]}]
+  (partial msg-handler bot))
 
 (defn start-telegram-bot
   [bot url long-polling-config msg-handler]
@@ -49,6 +49,7 @@
                                                url
                                                long-polling-config
                                                msg-handler]}]
+  (log/info "Start telegram bot: " (or url long-polling-config))
   (start-telegram-bot bot url long-polling-config msg-handler))
 
 (defmethod ig/init-key ::client [_ {:keys [token]}]

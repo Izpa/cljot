@@ -25,7 +25,7 @@
                            (let [updates (poll-updates bot config @update-id)
                                  messages (:result updates)]
                              (doseq [msg messages]
-                               (msg-handler (:message msg))
+                               (msg-handler msg)
                                (-> msg
                                    :update_id
                                    inc
