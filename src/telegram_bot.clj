@@ -43,25 +43,28 @@
 (def cmds
   [{:command-id :default
     :button-text ""
-    :answer-main-content "TODO не понял вас"
+    :answer-main-content
+    "Извинте, бот не поддерживает текстовый ввод, для навигации, пожалуйста, используйте кнопки меню"
     :button-ids [:main]}
    {:command-id :main
     :button-text "Вернуться на главную"
-    :answer-main-content (str "Здравствуйте! Я — чат-бот мебельной фабрики «Мария», "
-                              "ваш персональный помощник в мире кухонь и мебели для всего дома.\n"
-                              "<b>Чем я могу вам помочь сегодня?</b>")
+    :answer-main-content
+    (str "Здравствуйте! Я — чат-бот мебельной фабрики «Мария», "
+         "ваш персональный помощник в мире кухонь и мебели для всего дома.\n"
+         "<b>Чем я могу вам помочь сегодня?</b>")
     :button-ids [:examples
                  :order
                  :promotions]}
    {:command-id :examples
     :button-text "Посмотреть примеры реализованных проектов"
-    :answer-main-content (str "С удовольствием покажу вам примеры кухонь.\n\n"
-                              "<b>Наши кухни — это:</b>\n"
-                              "♦Стильные и современные решения\n"
-                              "♦Функциональность и комфорт\n"
-                              "♦Материалы высокого качества\n"
-                              "♦Но также с выгодными акциями (например, на встроенную технику)\n\n"
-                              "<b>Какой стиль вас интересует?</b>")
+    :answer-main-content
+    (str "С удовольствием покажу вам примеры кухонь.\n\n"
+         "<b>Наши кухни — это:</b>\n"
+         "♦Стильные и современные решения\n"
+         "♦Функциональность и комфорт\n"
+         "♦Материалы высокого качества\n"
+         "♦Но также с выгодными акциями (например, на встроенную технику)\n\n"
+         "<b>Какой стиль вас интересует?</b>")
     :button-ids [:modern-example
                  :neoclassic-example
                  :classic-example
@@ -92,9 +95,10 @@
                  :main]}
    {:command-id :promotions
     :button-text "Узнать о скидках и акциях"
-    :answer-main-content (str "<b>Покупать кухни в «Мария» выгодно!</b>\n\n"
-                              "Каждый месяц мы предлагаем нашим клиентам выгодные акции: скидки и подарки. Причем все акции суммируются.\n\n"
-                              "<b>Узнайте больше о наших предложениях:</b>")
+    :answer-main-content
+    (str "<b>Покупать кухни в «Мария» выгодно!</b>\n\n"
+         "Каждый месяц мы предлагаем нашим клиентам выгодные акции: скидки и подарки. Причем все акции суммируются.\n\n"
+         "<b>Узнайте больше о наших предложениях:</b>")
     :button-ids [:table
                  :technic
                  :installment
@@ -104,9 +108,11 @@
     :button-text "Скидка на столешницы до 80%"
     :answer-fn tbot/send-photo
     :answer-main-content "https://lh3.googleusercontent.com/drive-viewer/AKGpihamzHQZHBu0XVqtNRNVSsw7N6sHMnYzTG689ZXqshd-uLMXspNQ-J8JplBLHFsZONW3oWyKRTNKetO48OBCDkqOb8kF2SpycUU=s1600-rw-v1"
-    :answer-additional-contnent {:caption (str "<b>Скидка на столешницы до 80%</b>\n"
-                                               "Получайте удовольствие от готовки на новой кухне «Мария»! "
-                                               "А мы создадим невероятно стильное и удобное рабочее пространство со столешницей из искусственного камня со скидкой до 80 %.")}
+    :answer-additional-contnent
+    {:caption
+     (str "<b>Скидка на столешницы до 80%</b>\n"
+          "Получайте удовольствие от готовки на новой кухне «Мария»! "
+          "А мы создадим невероятно стильное и удобное рабочее пространство со столешницей из искусственного камня со скидкой до 80 %.")}
     :button-ids [:technic
                  :installment
                  :order
@@ -115,9 +121,11 @@
     :button-text "Рассрочка 0% на 12 месяцев"
     :answer-fn tbot/send-photo
     :answer-main-content "https://lh3.googleusercontent.com/drive-viewer/AKGpiha9jDmaBF_viiqc4kk2s6dnh-Ow6RhBSpwK3pS7-bsTB6pvxi6sClnnOAWJTg6Kr8GUNGk4AjqlLNRgVBVc6fetNcSmSHdUHQ=s1600-rw-v1"
-    :answer-additional-contnent {:caption (str "<b>Рассрочка 0% на 12 месяцев</b>\n"
-                                               "без первоначального взноса и переплаты. "
-                                               "А также предложим выгодные условия по субсидированной рассрочке до 36 месяцев.")}
+    :answer-additional-contnent
+    {:caption
+     (str "<b>Рассрочка 0% на 12 месяцев</b>\n"
+          "без первоначального взноса и переплаты. "
+          "А также предложим выгодные условия по субсидированной рассрочке до 36 месяцев.")}
     :button-ids [:table
                  :technic
                  :order
@@ -126,24 +134,27 @@
     :button-text "Техника в подарок"
     :answer-fn tbot/send-photo
     :answer-main-content "https://lh3.googleusercontent.com/drive-viewer/AKGpihZqNc8Dvy-RDZ8cv-0oGYs1jpYJ_JBLGDJi3VYRz1linIEAjebz4-9PpiwMooREokZT-1RcKB-ocDLBqKCLClFLCvERK1XWNMA=s2560"
-    :answer-additional-contnent {:caption (str "<b>Техника в подарок</b>\n"
-                                               "Только по 31 июля дарим посудомоечную машину при покупке кухни «Мария» и двух единиц встраиваемой техники брендов Korting, Kuppersberg, Krona, Haier, Graude, Smeg или Hotpoint. "
-                                               "Количество подарков ограниченное – успейте забрать свой!")}
+    :answer-additional-contnent
+    {:caption
+     (str "<b>Техника в подарок</b>\n"
+          "Только по 31 июля дарим посудомоечную машину при покупке кухни «Мария» и двух единиц встраиваемой техники брендов Korting, Kuppersberg, Krona, Haier, Graude, Smeg или Hotpoint. "
+          "Количество подарков ограниченное – успейте забрать свой!")}
     :button-ids [:table
                  :installment
                  :order
                  :main]}
    {:command-id :order
     :button-text "Получить бесплатный дизайн-проект"
-    :answer-main-content (str "Создайте кухню своей мечты вместе с нашими дизайнерами! \n‍\n"
-                              "Мы предлагаем вам бесплатный дизайн-проект кухни, который поможет определиться с выбором. "
-                              "Наш дизайнер учтёт все ваши пожелания и предложит оптимальный вариант.\n\n"
-                              "<b>Бесплатный дизайн-проект включает:</b>\n"
-                              "♦Профессиональную  визуализацию мебели\n"
-                              "♦Индивидуальный подбор материалов и техники\n"
-                              "♦Расчет стоимости кухни\n"
-                              "♦Полезные советы и рекомендации\n\n"
-                              "<b>Для получения бесплатного дизайн-проекта, необходимо ответить на 3 вопроса.</b>")
+    :answer-main-content
+    (str "Создайте кухню своей мечты вместе с нашими дизайнерами! \n‍\n"
+         "Мы предлагаем вам бесплатный дизайн-проект кухни, который поможет определиться с выбором. "
+         "Наш дизайнер учтёт все ваши пожелания и предложит оптимальный вариант.\n\n"
+         "<b>Бесплатный дизайн-проект включает:</b>\n"
+         "♦Профессиональную  визуализацию мебели\n"
+         "♦Индивидуальный подбор материалов и техники\n"
+         "♦Расчет стоимости кухни\n"
+         "♦Полезные советы и рекомендации\n\n"
+         "<b>Для получения бесплатного дизайн-проекта, необходимо ответить на 3 вопроса.</b>")
     :button-ids [:start-order
                  :main]}
    {:command-id :start-order
@@ -188,10 +199,10 @@
         answer (partial tbot/send-message bot id)]
     (cond
       (nil? nam) (if true
-                    (do
-                      (swap! orders assoc-in [id :nam] text)
-                      (answer "Укажите, пожалуйста, ваш город"))
-                    (answer "Укажите, пожалуйста, ваше имя"))
+                   (do
+                     (swap! orders assoc-in [id :nam] text)
+                     (answer "Укажите, пожалуйста, ваш город"))
+                   (answer "Укажите, пожалуйста, ваше имя"))
       (nil? city) (if true
                     (do
                       (swap! orders assoc-in [id :city] text)
@@ -213,13 +224,17 @@
                                 :parse_mode "HTML"}))
                      (answer "Укажите, пожалуйста, ваш телефон")))))
 
+(defonce members (atom #{}))
+
 (defn bot+msg->answer
   [bot msg]
   (let [{{:keys [id]} :chat
          :keys [data]} msg
-        command-id (if data
-                     (keyword data)
-                     :default)]
+        command-id (cond
+                     data (keyword data)
+                     (get @members id) :default
+                     :else (do (swap! members conj id)
+                               :main))]
     (when (> id 0)
       (if (get @orders id)
         (continue-dialogue bot msg)
