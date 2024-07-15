@@ -241,8 +241,9 @@
                                      phone]} order]
                          (log/info "New order "
                                    (merge chat order))
-                         (send-email ["ispius.prime@gmail.com"
-                                      "markov.artem.p@gmail.com"]
+                         (send-email ["markov.artem.p@gmail.com"
+                                      "m.varlakova@realweb.ru"
+                                      "e.belyanina@realweb.ru"]
                                      (->email-html username
                                                    first_name
                                                    last_name
