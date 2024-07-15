@@ -1,6 +1,7 @@
 (ns answer
   (:require
    [clj-http.client :as client]
+   [integrant.core :as ig]
    [taoensso.timbre :as log]
    [telegrambot-lib.core :as tbot]
    [utils :refer [pformat]]))
@@ -170,99 +171,97 @@
   (into {}
         (mapv (comp command->key-val ->command) cmds)))
 
-(defn ->answer
-  [commands bot command-id chat-id]
-  (let [{:keys [answer-fn
-                answer-main-content
-                answer-additional-contnent
-                button-ids]} (get commands command-id)]
-    (if answer-fn
-      (answer-fn bot
-                 chat-id
-                 answer-main-content
-                 (merge {:reply_markup {:inline_keyboard (mapv (fn [button-id]
-                                                                 [{:text (get-in commands [button-id :button-text])
-                                                                   :callback_data (name button-id)}])
-                                                               button-ids)}
-                         :parse_mode "HTML"}
-                        answer-additional-contnent))
-      (throw (ex-info "Unexisted command-id"
-                      {:command-id command-id})))))
+(defmethod ig/init-key ::->menu [_ {:keys [bot]}]
+  (fn [command-id chat-id]
+    (let [{:keys [answer-fn
+                  answer-main-content
+                  answer-additional-contnent
+                  button-ids]} (get commands command-id)]
+      (if answer-fn
+        (answer-fn bot
+                   chat-id
+                   answer-main-content
+                   (merge {:reply_markup {:inline_keyboard (mapv (fn [button-id]
+                                                                   [{:text (get-in commands [button-id :button-text])
+                                                                     :callback_data (name button-id)}])
+                                                                 button-ids)}
+                           :parse_mode "HTML"}
+                          answer-additional-contnent))
+        (throw (ex-info "Unexisted command-id"
+                        {:command-id command-id}))))))
 
-(defn send-email
-  [username first_name last_name id nam city phone]
-  (log/info "Send email "
-            (pformat (client/post "https://api.mailgun.net/v3/sandboxf82952cfa3004f93a0d665030ef6c014.mailgun.org/messages"
-                                  {:basic-auth ["api" ""] ;;TODO: API key
-                                   :form-params {:from "notification@izpa.xyz"
-                                                 :to ["ispius.prime@gmail.com"
-                                                      "markov.art fsem.p@gmail.com"
-                                                      "e.belyanina@realweb.ru"]
-                                                 :subject "Новая заявка в телеграм-боте"
-                                                 :text (str "telegram-username: " username "\n"
-                                                            "telegram-firstname: " first_name "\n"
-                                                            "telegram-lastname: " last_name "\n"
-                                                            "telegram-chat-id: " id "\n"
-                                                            "received-name: " nam "\n"
-                                                            "received-city: " city "\n"
-                                                            "received-phone: " phone "\n")}}))))
+(defmethod ig/init-key ::send-email [_ {:keys [api-key]}]
+  (fn [username first_name last_name id nam city phone]
+    (log/info "Send email "
+              (pformat (client/post "https://api.mailgun.net/v3/sandboxf82952cfa3004f93a0d665030ef6c014.mailgun.org/messages"
+                                    {:basic-auth ["api" api-key]
+                                     :form-params {:from "notification@izpa.xyz"
+                                                   :to ["markov.artem.p@gmail.com"
+                                                        "e.belyanina@realweb.ru"]
+                                                   :subject "Новая заявка в телеграм-боте"
+                                                   :text (str "telegram-username: " username "\n"
+                                                              "telegram-firstname: " first_name "\n"
+                                                              "telegram-lastname: " last_name "\n"
+                                                              "telegram-chat-id: " id "\n"
+                                                              "received-name: " nam "\n"
+                                                              "received-city: " city "\n"
+                                                              "received-phone: " phone "\n")}})))))
 
-(defn continue-dialogue
-  [bot {{:keys [id
+(defmethod ig/init-key ::->dialogue [_ {:keys [bot send-email]}]
+  (fn [{{:keys [id
                 first_name
                 last_name
                 username]
          :as chat} :chat
-        :keys [text]
-        :as _msg}]
-  (let [{:keys [nam
-                city
-                phone]} (get @orders id)
-        answer (partial tbot/send-message bot id)]
-    (cond
-      (nil? nam) (do
-                   (swap! orders assoc-in [id :nam] text)
-                   (answer "Укажите, пожалуйста, ваш город"))
-      (nil? city) (do
-                    (swap! orders assoc-in [id :city] text)
-                    (answer "Укажите, пожалуйста, ваш телефон в формате +7XXXXXXXXXX"))
-      (nil? phone) (if (re-matches #"\+7\d\d\d\d\d\d\d\d\d\d" text)
-                     (let [order (-> @orders
-                                     (get id)
-                                     (assoc :phone text))
-                           {:keys [nam
-                                   city
-                                   phone]} order]
-                       (log/info "New order "
-                                 (merge chat order))
-                       (send-email username
-                                   first_name
-                                   last_name
-                                   id
-                                   nam
-                                   city
-                                   phone)
-                       (swap! orders dissoc id)
-                       (answer (str "<b>Спасибо за заявку!</b>\n\n"
-                                    "Наш менеджер свяжется с вами в ближайшее время, чтобы обсудить детали вашего дизайн-проекта и помочь вам максимально выгодно приобрести кухню вашей мечты.\n\n"
-                                    "<b>Вдохновения вам и скорейшего завершения ремонта!💫</b>")
-                               {:reply_markup {:inline_keyboard [[{:text (get-in commands [:main :button-text])
-                                                                   :callback_data (name :main)}]]}
-                                :parse_mode "HTML"}))
-                     (answer "Укажите, пожалуйста, ваш телефон в формате +7XXXXXXXXXX")))))
+        :keys [text]}]
+    (let [{:keys [nam
+                  city
+                  phone]} (get @orders id)
+          answer (partial tbot/send-message bot id)]
+      (cond
+        (nil? nam) (do
+                     (swap! orders assoc-in [id :nam] text)
+                     (answer "Укажите, пожалуйста, ваш город"))
+        (nil? city) (do
+                      (swap! orders assoc-in [id :city] text)
+                      (answer "Укажите, пожалуйста, ваш телефон в формате +7XXXXXXXXXX"))
+        (nil? phone) (if (re-matches #"\+7\d\d\d\d\d\d\d\d\d\d" text)
+                       (let [order (-> @orders
+                                       (get id)
+                                       (assoc :phone text))
+                             {:keys [nam
+                                     city
+                                     phone]} order]
+                         (log/info "New order "
+                                   (merge chat order))
+                         (send-email username
+                                     first_name
+                                     last_name
+                                     id
+                                     nam
+                                     city
+                                     phone)
+                         (swap! orders dissoc id)
+                         (answer (str "<b>Спасибо за заявку!</b>\n\n"
+                                      "Наш менеджер свяжется с вами в ближайшее время, чтобы обсудить детали вашего дизайн-проекта и помочь вам максимально выгодно приобрести кухню вашей мечты.\n\n"
+                                      "<b>Вдохновения вам и скорейшего завершения ремонта!💫</b>")
+                                 {:reply_markup {:inline_keyboard [[{:text (get-in commands [:main :button-text])
+                                                                     :callback_data (name :main)}]]}
+                                  :parse_mode "HTML"}))
+                       (answer "Укажите, пожалуйста, ваш телефон в формате +7XXXXXXXXXX"))))))
 
 (defonce members (atom #{}))
 
-(defn bot+msg->answer
-  [bot msg]
-  (let [{{:keys [id]} :chat
-         :keys [data]} msg
-        command-id (cond
-                     data (keyword data)
-                     (get @members id) :default
-                     :else (do (swap! members conj id)
-                               :main))]
-    (when (pos? id)
-      (if (get @orders id)
-        (continue-dialogue bot msg)
-        (->answer commands bot command-id id)))))
+(defmethod ig/init-key ::msg->answer [_ {:keys [->dialogue ->menu]}]
+  (fn [msg]
+    (let [{{:keys [id]} :chat
+           :keys [data]} msg
+          command-id (cond
+                       data (keyword data)
+                       (get @members id) :default
+                       :else (do (swap! members conj id)
+                                 :main))]
+      (when (pos? id)
+        (if (get @orders id)
+          (->dialogue msg)
+          (->menu command-id id))))))

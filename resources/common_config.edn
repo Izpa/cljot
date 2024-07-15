@@ -1,13 +1,23 @@
 #merge [{:telegram-bot/client
          {:token #env "CLIENT_BOT_TELEGRAM_TOKEN"}
 
+         :answer/send-email {:api-key "4a6a1c6a428e5c73a4795c68affd6b92-91fbbdba-1fff07aa"}
+
+         :answer/->dialogue {:bot #ig/ref :telegram-bot/client
+                             :send-email #ig/ref :answer/send-email}
+
+         :answer/->menu {:bot #ig/ref :telegram-bot/client}
+
+         :answer/msg->answer {:->dialogue #ig/ref :answer/->dialogue
+                              :->menu #ig/ref :answer/->menu} 
+         
          :telegram-bot/msg-handler
-         {:bot #ig/ref :telegram-bot/client}
+         {:msg->answer #ig/ref :answer/msg->answer}
 
          :telegram-bot/run-client
          {:bot #ig/ref :telegram-bot/client
           :url #env "SELF_URL"
-          :msg-handler #ig/ref :telegram-bot/msg-handler 
+          :msg-handler #ig/ref :telegram-bot/msg-handler
           :long-polling-config {:timeout #or [#env "CLIENT_BOT_LONG_POLLING_TIMEOUT" 10]
                                 :sleep #or [#env "CLIENT_BOT_LONG_POLLING_SLEEP" 1000]}}
 
