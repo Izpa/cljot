@@ -193,13 +193,16 @@
 (defmethod ig/init-key ::send-email [_ {:keys [api-key]}]
   (fn [username first_name last_name id nam city phone]
     (log/info "Send email "
-              (pformat (client/post "https://api.mailgun.net/v3/sandboxf82952cfa3004f93a0d665030ef6c014.mailgun.org/messages"
-                                    {:basic-auth ["api" api-key]
-                                     :form-params {:from "notification@izpa.xyz"
+              (pformat (client/post "https://api.mailopost.ru/v1/email/messages"
+                                    {:headers {"Authorization" (str "Bearer " api-key)
+                                               "Content-Type" "application/json"}
+                                     :content-type :json 
+                                     :form-params {:from_email "notification@izpa.xyz"
+                                                   :from_name "Бот Кухни Мария"
                                                    :to ["markov.artem.p@gmail.com"
                                                         "e.belyanina@realweb.ru"]
                                                    :subject "Новая заявка в телеграм-боте"
-                                                   :text (str "telegram-username: " username "\n"
+                                                   :html (str "telegram-username: " username "\n"
                                                               "telegram-firstname: " first_name "\n"
                                                               "telegram-lastname: " last_name "\n"
                                                               "telegram-chat-id: " id "\n"
