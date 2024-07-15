@@ -6,12 +6,13 @@
    [telegrambot-lib.core :as tbot]
    [utils :refer [pformat]]))
 
-(defrecord Command [command-id
-                    button-text
-                    answer-fn
-                    answer-main-content
-                    answer-additional-contnent
-                    button-ids])
+(defrecord Command
+  [command-id
+   button-text
+   answer-fn
+   answer-main-content
+   answer-additional-contnent
+   button-ids])
 
 (defn ->command
   [{:keys [command-id
@@ -192,33 +193,28 @@
 (defn continue-dialogue
   [bot {{:keys [id]} :chat
         :keys [text]
-        :as msg}]
+        :as _msg}]
   (let [{:keys [nam
                 city
                 phone]} (get @orders id)
         answer (partial tbot/send-message bot id)]
     (cond
-      (nil? nam) (if true
-                   (do
-                     (swap! orders assoc-in [id :nam] text)
-                     (answer "Укажите, пожалуйста, ваш город"))
-                   (answer "Укажите, пожалуйста, ваше имя"))
-      (nil? city) (if true
-                    (do
-                      (swap! orders assoc-in [id :city] text)
-                      (answer "Укажите, пожалуйста, ваш телефон"))
-                    (answer "Укажите, пожалуйста, ваш город"))
-      (nil? phone) (if true
+      (nil? nam) (do
+                   (swap! orders assoc-in [id :nam] text)
+                   (answer "Укажите, пожалуйста, ваш город"))
+      (nil? city) (do
+                    (swap! orders assoc-in [id :city] text)
+                    (answer "Укажите, пожалуйста, ваш телефон"))
+      (nil? phone) (if text ; TODO: check phone
                      (let [order (-> @orders
                                      (get id)
                                      (assoc :phone text))]
                        (log/info "New order" order)
+                       ;; TODO: sent email
                        (swap! orders dissoc id)
-                       (answer "<b>Спасибо за заявку!</b>
-
-Наш менеджер свяжется с вами в ближайшее время, чтобы обсудить детали вашего дизайн-проекта и помочь вам максимально выгодно приобрести кухню вашей мечты.
-
-<b>Вдохновения вам и скорейшего завершения ремонта!💫</b>"
+                       (answer (str "<b>Спасибо за заявку!</b>\n\n"
+                                    "Наш менеджер свяжется с вами в ближайшее время, чтобы обсудить детали вашего дизайн-проекта и помочь вам максимально выгодно приобрести кухню вашей мечты.\n\n"
+                                    "<b>Вдохновения вам и скорейшего завершения ремонта!💫</b>")
                                {:reply_markup {:inline_keyboard [[{:text (get-in commands [:main :button-text])
                                                                    :callback_data (name :main)}]]}
                                 :parse_mode "HTML"}))
@@ -235,7 +231,7 @@
                      (get @members id) :default
                      :else (do (swap! members conj id)
                                :main))]
-    (when (> id 0)
+    (when (pos? id)
       (if (get @orders id)
         (continue-dialogue bot msg)
         (->answer commands bot command-id id)))))

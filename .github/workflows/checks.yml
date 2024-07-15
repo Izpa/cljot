@@ -5,35 +5,6 @@ on:
       - main
 
 jobs:
-  cljfmt-check:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v3
-
-      - name: Install clojure tools
-        uses: DeLaGuardo/setup-clojure@12.3
-        with:
-          # Install just one or all simultaneously
-          # The value must indicate a particular version of the tool, or use 'latest'
-          # to always provision the latest version
-          cli: latest
-          cljfmt: latest
-          zprint: latest
-
-      - name: Cache jars
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.m2
-            ~/.gitlibs
-            ~/.deps.clj
-          key: maven-${{ hashFiles('deps.edn') }}
-          restore-keys: clj-deps-
-
-      - name: Cljfmt check
-        run: make cljfmt-check
-
   cljstyle-check:
           runs-on: ubuntu-latest
           steps:

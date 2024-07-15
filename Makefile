@@ -18,14 +18,6 @@ kondo:
 eastwood:
 	clojure -M:common-test:unit-test:integration-test:eastwood
 
-.PHONY: cljfmt-check
-cljfmt-check:
-	clojure -M:common-test:unit-test:integration-test:cljfmt check
-
-.PHONY: cljfmt-fix
-cljfmt-fix:
-	clojure -M:common-test:unit-test:integration-test:cljfmt fix
-
 .PHONY: cljstyle-check
 cljstyle-check:
 	cljstyle check
@@ -63,4 +55,4 @@ clj-deps:
 	clj -X:deps prep 
 
 .PHONY: all-checks
-all-checks: cljfmt-check cljstyle-check kibit kondo eastwood unit-test integration-test
+all-checks: cljstyle-check kibit kondo eastwood unit-test integration-test

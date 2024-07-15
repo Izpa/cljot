@@ -1,7 +1,9 @@
 (ns utils
-  (:require [clojure.pprint :as pprint]))
+  (:require
+   [clojure.pprint :as pprint]))
 
-(defn pformat [& args]
+(defn pformat
+  [& args]
   (with-out-str
     (apply pprint/pprint args)))
 

@@ -1,11 +1,12 @@
 (ns user
   (:require
+   [clojure-watch.core :refer [start-watch]]
    [config :refer [prepare]]
    [integrant.core :as ig]
-   [integrant.repl :as igr]
-   [clojure-watch.core :refer [start-watch]]))
+   [integrant.repl :as igr]))
 
-(defn start! []
+(defn start!
+  []
   (integrant.repl/set-prep! #(ig/prep (prepare)))
   (igr/go)
   (start-watch [{:path "src"
@@ -19,7 +20,6 @@
                              (binding [*ns* *ns*]
                                (igr/reset)))
                  :options {:recursive true}}]))
-
 
 (comment
   (System/getenv "CLIENT_BOT_TELEGRAM_TOKEN")
