@@ -21,10 +21,25 @@
                                (igr/reset)))
                  :options {:recursive true}}]))
 
+(defonce system (atom nil))
+
+(defn start-system!
+  []
+  (reset! system (start!)))
+
+(defn stop-watch!
+  []
+  (when @system (@system)))
+
+(defn stop-system!
+  []
+  (stop-watch!)
+  (igr/halt))
+
 (comment
   (System/getenv "CLIENT_BOT_TELEGRAM_TOKEN")
 
-  (def stop-system! (start!))
+  (start-system!)
 
   (stop-system!) ;;stop watch
 

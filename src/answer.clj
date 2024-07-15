@@ -190,25 +190,29 @@
         (throw (ex-info "Unexisted command-id"
                         {:command-id command-id}))))))
 
+(defn ->email-html
+  [username first_name last_name id nam city phone]
+  (str "telegram-username: " username "<br>"
+       "telegram-firstname: " first_name "<br>"
+       "telegram-lastname: " last_name "<br>"
+       "telegram-chat-id: " id "<br>"
+       "received-name: " nam "<br>"
+       "received-city: " city "<br>"
+       "received-phone: " phone))
+
 (defmethod ig/init-key ::send-email [_ {:keys [api-key]}]
-  (fn [username first_name last_name id nam city phone]
-    (log/info "Send email "
-              (pformat (client/post "https://api.mailopost.ru/v1/email/messages"
-                                    {:headers {"Authorization" (str "Bearer " api-key)
-                                               "Content-Type" "application/json"}
-                                     :content-type :json 
-                                     :form-params {:from_email "notification@izpa.xyz"
-                                                   :from_name "Бот Кухни Мария"
-                                                   :to ["markov.artem.p@gmail.com"
-                                                        "e.belyanina@realweb.ru"]
-                                                   :subject "Новая заявка в телеграм-боте"
-                                                   :html (str "telegram-username: " username "\n"
-                                                              "telegram-firstname: " first_name "\n"
-                                                              "telegram-lastname: " last_name "\n"
-                                                              "telegram-chat-id: " id "\n"
-                                                              "received-name: " nam "\n"
-                                                              "received-city: " city "\n"
-                                                              "received-phone: " phone "\n")}})))))
+  (fn [to-emails email-html]
+    (doseq [to-email to-emails]
+      (log/info "Send email "
+                (pformat (client/post "https://api.mailopost.ru/v1/email/messages"
+                                      {:headers {"Authorization" (str "Bearer " api-key)
+                                                 "Content-Type" "application/json"}
+                                       :content-type :json
+                                       :form-params {:from_email "notification@izpa.xyz"
+                                                     :from_name "Бот Кухни Мария"
+                                                     :to to-email
+                                                     :subject "Новая заявка в телеграм-боте"
+                                                     :html email-html}}))))))
 
 (defmethod ig/init-key ::->dialogue [_ {:keys [bot send-email]}]
   (fn [{{:keys [id
@@ -237,13 +241,15 @@
                                      phone]} order]
                          (log/info "New order "
                                    (merge chat order))
-                         (send-email username
-                                     first_name
-                                     last_name
-                                     id
-                                     nam
-                                     city
-                                     phone)
+                         (send-email ["ispius.prime@gmail.com"
+                                      "markov.artem.p@gmail.com"]
+                                     (->email-html username
+                                                   first_name
+                                                   last_name
+                                                   id
+                                                   nam
+                                                   city
+                                                   phone))
                          (swap! orders dissoc id)
                          (answer (str "<b>Спасибо за заявку!</b>\n\n"
                                       "Наш менеджер свяжется с вами в ближайшее время, чтобы обсудить детали вашего дизайн-проекта и помочь вам максимально выгодно приобрести кухню вашей мечты.\n\n"
