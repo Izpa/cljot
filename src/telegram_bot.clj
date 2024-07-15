@@ -7,12 +7,12 @@
    [utils :refer [pformat]]))
 
 (defrecord Command
-  [command-id
-   button-text
-   answer-fn
-   answer-main-content
-   answer-additional-contnent
-   button-ids])
+           [command-id
+            button-text
+            answer-fn
+            answer-main-content
+            answer-additional-contnent
+            button-ids])
 
 (defn ->command
   [{:keys [command-id
@@ -191,7 +191,10 @@
                       {:command-id command-id})))))
 
 (defn continue-dialogue
-  [bot {{:keys [id]} :chat
+  [bot {{:keys [id
+                first_name
+                last_name
+                username]} :chat
         :keys [text]
         :as _msg}]
   (let [{:keys [nam
@@ -204,12 +207,22 @@
                    (answer "Укажите, пожалуйста, ваш город"))
       (nil? city) (do
                     (swap! orders assoc-in [id :city] text)
-                    (answer "Укажите, пожалуйста, ваш телефон"))
-      (nil? phone) (if text ; TODO: check phone
-                     (let [order (-> @orders
-                                     (get id)
-                                     (assoc :phone text))]
-                       (log/info "New order" order)
+                    (answer "Укажите, пожалуйста, ваш телефон в формате +7XXXXXXXXXX"))
+      (nil? phone) (if (re-matches #"\+7\d\d\d\d\d\d\d\d\d\d" text)
+                     (let [{:keys [nam
+                                   city
+                                   phone]} (-> @orders
+                                               (get id)
+                                               (assoc :phone text))]
+                       (log/info "New order"
+                                 (str "Новая заявка в телеграм-боте<br>"
+                                      "telegram-username: " username "<br>"
+                                      "telegram-firstname: " first_name "<br>"
+                                      "telegram-lastname: " last_name "<br>"
+                                      "telegram-chat-id: " id "<br>"
+                                      "received-name: " nam "<br>"
+                                      "received-city: " city "<br>"
+                                      "received-phone: " phone "<br>"))
                        ;; TODO: sent email
                        (swap! orders dissoc id)
                        (answer (str "<b>Спасибо за заявку!</b>\n\n"
@@ -218,7 +231,7 @@
                                {:reply_markup {:inline_keyboard [[{:text (get-in commands [:main :button-text])
                                                                    :callback_data (name :main)}]]}
                                 :parse_mode "HTML"}))
-                     (answer "Укажите, пожалуйста, ваш телефон")))))
+                     (answer "Укажите, пожалуйста, ваш телефон в формате +7XXXXXXXXXX")))))
 
 (defonce members (atom #{}))
 
