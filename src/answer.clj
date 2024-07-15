@@ -7,12 +7,12 @@
    [utils :refer [pformat]]))
 
 (defrecord Command
-  [command-id
-   button-text
-   answer-fn
-   answer-main-content
-   answer-additional-contnent
-   button-ids])
+           [command-id
+            button-text
+            answer-fn
+            answer-main-content
+            answer-additional-contnent
+            button-ids])
 
 (defn ->command
   [{:keys [command-id
@@ -184,7 +184,8 @@
                    (merge {:reply_markup {:inline_keyboard (mapv (fn [button-id]
                                                                    [{:text (get-in commands [button-id :button-text])
                                                                      :callback_data (name button-id)}])
-                                                                 button-ids)}
+                                                                 button-ids)
+                                          :remove_keyboard true}
                            :parse_mode "HTML"}
                           answer-additional-contnent))
         (throw (ex-info "Unexisted command-id"
@@ -226,13 +227,18 @@
                   phone]} (get @orders id)
           answer (partial tbot/send-message bot id)]
       (cond
-        (nil? nam) (do
-                     (swap! orders assoc-in [id :nam] text)
-                     (answer "Укажите, пожалуйста, ваш город"))
-        (nil? city) (do
-                      (swap! orders assoc-in [id :city] text)
-                      (answer "Укажите, пожалуйста, ваш телефон в формате +7XXXXXXXXXX"))
-        (nil? phone) (if (re-matches #"\+7\d\d\d\d\d\d\d\d\d\d" text)
+        (nil? nam) (if text
+                     (do
+                       (swap! orders assoc-in [id :nam] text)
+                       (answer "Укажите, пожалуйста, ваш город"))
+                     (answer "Укажите, пожалуйста, ваше имя"))
+        (nil? city) (if text
+                      (do
+                        (swap! orders assoc-in [id :city] text)
+                        (answer "Укажите, пожалуйста, ваш телефон в формате +7XXXXXXXXXX"))
+                      (answer "Укажите, пожалуйста, ваш город"))
+        (nil? phone) (if (and text
+                              (re-matches #"\+7\d\d\d\d\d\d\d\d\d\d" text))
                        (let [order (-> @orders
                                        (get id)
                                        (assoc :phone text))
