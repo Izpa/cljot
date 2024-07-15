@@ -70,7 +70,7 @@
    {:command-id :modern-example
     :button-text "Современный стиль"
     :answer-fn tbot/send-photo
-    :answer-main-content "AgACAgIAAxkBAAIEEGaSuGFOD_4DudPc_z0CYp4zPf7vAALY2TEbz0WQSCQ0sJmbBHQ8AQADAgADbQADNQQ"
+    :answer-main-content "https://lh3.googleusercontent.com/drive-viewer/AKGpihY0hanwjKQ2REOYtP_5PhMRnoW9YhhdhHvMqhsfztKJ_LqjqgAi-tlAt5zV7iI-FHrw8l8wVj_nIF-TiGzXJ1FBHK_xzWekHMk=s1600-rw-v1"
     :button-ids [:neoclassic-example
                  :classic-example
                  :order
@@ -78,7 +78,7 @@
    {:command-id :neoclassic-example
     :button-text "Неоклассический стиль"
     :answer-fn tbot/send-photo
-    :answer-main-content "AgACAgIAAxkBAAIEH2aSu3HMmWzi859JMhuVV4-oPUcRAAIz4DEb4ceQSB5dNSH0a9fPAQADAgADeQADNQQ"
+    :answer-main-content "https://lh3.googleusercontent.com/drive-viewer/AKGpihYy2ILzoLP8vXxK5hvEcjHTboFDKZKRN-OV9VzmieK_8IdwhROvkXI6EgxKzg6Xz_mRGnruwQ8jvk9_gXQltj6pGy_G0l_Erw=s1600-rw-v1"
     :button-ids [:modern-example
                  :classic-example
                  :order
@@ -86,7 +86,7 @@
    {:command-id :classic-example
     :button-text "Классический стиль"
     :answer-fn tbot/send-photo
-    :answer-main-content "AgACAgIAAxkBAAIEIWaSvDsfRblbSOjO87ait3qRvafQAAIj2jEbz0WQSLrtCi_PolHMAQADAgADeQADNQQ"
+    :answer-main-content "https://lh3.googleusercontent.com/drive-viewer/AKGpihanGxKQx06YHHXpyNPt5fq19a6O1uSXH1pB_ELG0EfVYTLuK3lqvmRvXI0sF_p582IBcQK15_MvLSFnt5xr1DgIop1sRnHkeZI=s1600-rw-v1"
     :button-ids [:modern-example
                  :neoclassic-example
                  :order
@@ -106,7 +106,7 @@
    {:command-id :table
     :button-text "Скидка на столешницы до 80%"
     :answer-fn tbot/send-photo
-    :answer-main-content "AgACAgIAAxkBAAIEMWaSvqzFjuCAwEuZNF8ZFvFEsFOXAAI12jEbz0WQSIrnDJx8ZhBEAQADAgADeQADNQQ"
+    :answer-main-content "https://lh3.googleusercontent.com/drive-viewer/AKGpihamzHQZHBu0XVqtNRNVSsw7N6sHMnYzTG689ZXqshd-uLMXspNQ-J8JplBLHFsZONW3oWyKRTNKetO48OBCDkqOb8kF2SpycUU=s1600-rw-v1"
     :answer-additional-contnent {:caption "<b>Скидка на столешницы до 80%</b>
 Получайте удовольствие от готовки на новой кухне «Мария»! А мы создадим невероятно стильное и удобное рабочее пространство со столешницей из искусственного камня со скидкой до 80 %."}
     :button-ids [:technic
@@ -116,7 +116,7 @@
    {:command-id :installment
     :button-text "Рассрочка 0% на 12 месяцев"
     :answer-fn tbot/send-photo
-    :answer-main-content "AgACAgIAAxkBAAIENmaSv9guYneFiswaycal9dxUgyFAAALy1zEbz0WQSCcBPzCl0touAQADAgADeQADNQQ"
+    :answer-main-content "https://lh3.googleusercontent.com/drive-viewer/AKGpiha9jDmaBF_viiqc4kk2s6dnh-Ow6RhBSpwK3pS7-bsTB6pvxi6sClnnOAWJTg6Kr8GUNGk4AjqlLNRgVBVc6fetNcSmSHdUHQ=s1600-rw-v1"
     :answer-additional-contnent {:caption "<b>Рассрочка 0% на 12 месяцев</b>
 без первоначального взноса и переплаты. А также предложим выгодные условия по субсидированной рассрочке до 36 месяцев."}
     :button-ids [:table
@@ -126,7 +126,7 @@
    {:command-id :technic
     :button-text "Техника в подарок"
     :answer-fn tbot/send-photo
-    :answer-main-content "AgACAgIAAxkBAAIEOGaSwSBP7LtD2x-kca3zUh7GmMbuAAJE2jEbz0WQSDSi7WNjJF4oAQADAgADeAADNQQ"
+    :answer-main-content "https://lh3.googleusercontent.com/drive-viewer/AKGpihZqNc8Dvy-RDZ8cv-0oGYs1jpYJ_JBLGDJi3VYRz1linIEAjebz4-9PpiwMooREokZT-1RcKB-ocDLBqKCLClFLCvERK1XWNMA=s2560"
     :answer-additional-contnent {:caption "<b>Техника в подарок</b>
 Только по 31 июля дарим посудомоечную машину при покупке кухни «Мария» и двух единиц встраиваемой техники брендов Korting, Kuppersberg, Krona, Haier, Graude, Smeg или Hotpoint. Количество подарков ограниченное – успейте забрать свой!"}
     :button-ids [:table
