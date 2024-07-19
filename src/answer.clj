@@ -249,7 +249,11 @@
                                    (merge chat order))
                          (send-email ["markov.artem.p@gmail.com"
                                       "m.varlakova@realweb.ru"
-                                      "e.belyanina@realweb.ru"]
+                                      "e.belyanina@realweb.ru"
+                                      "S-razdelkina@marya.ru"
+                                      "Yul-platitsina@marya.ru"
+                                      "dispatcher@marya.ru"
+                                      "User3210@realweb.ru"]
                                      (->email-html username
                                                    first_name
                                                    last_name
