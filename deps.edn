@@ -31,7 +31,7 @@
 
   :check
   {:extra-deps {athos/clj-check {:git/url "https://github.com/athos/clj-check.git"
-                                 :sha     "0ca84df1357d71429243b99908303f45a934654c"}}
+                                 :sha     "d997df866b2a04b7ce7b17533093ee0a2e2cb729"}}
    :main-opts ["-m" "clj-check.check"]}
 
   :kondo
