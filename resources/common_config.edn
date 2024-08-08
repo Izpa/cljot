@@ -3,8 +3,12 @@
 
          :answer/send-email {:api-key #env "EMAIL_API_KEY"}
 
+         :answer/push-request {:sign #env "PUSH_REQUEST_SIGN"
+                               :api-url #env "PUSH_REQUEST_API_URL"}
+
          :answer/->dialogue {:bot #ig/ref :telegram-bot/client
-                             :send-email #ig/ref :answer/send-email}
+                             :send-email #ig/ref :answer/send-email
+                             :push-request #ig/ref :answer/push-request}
 
          :answer/->menu {:bot #ig/ref :telegram-bot/client}
 

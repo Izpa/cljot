@@ -4,7 +4,8 @@
    [integrant.core :as ig]
    [taoensso.timbre :as log]
    [telegrambot-lib.core :as tbot]
-   [utils :refer [pformat]]))
+   [utils :refer [pformat]]
+   [cheshire.core :as cheshire]))
 
 (defrecord Command
            [command-id
@@ -215,7 +216,18 @@
                                                      :subject "Новая заявка в телеграм-боте"
                                                      :html email-html}}))))))
 
-(defmethod ig/init-key ::->dialogue [_ {:keys [bot send-email]}]
+(defmethod ig/init-key ::push-request [_ {:keys [sign api-url]}]
+  (fn [body]
+    (log/info "Push request "
+              (pformat (client/post api-url
+                                    {:headers {"Authorization" (str "Basic " sign)
+                                               "Content-Type" "application/json"}
+                                     :content-type :json
+                                     :body (cheshire/generate-string body)})))))
+
+(defmethod ig/init-key ::->dialogue [_ {:keys [bot
+                                               send-email
+                                               push-request]}]
   (fn [{{:keys [id
                 first_name
                 last_name
@@ -261,6 +273,13 @@
                                                    nam
                                                    city
                                                    phone))
+                         (push-request {:telegram-username username
+                                        :telegram-firstname first_name
+                                        :telegram-lastname last_name
+                                        :telegram-chat-id id
+                                        :received-name nam
+                                        :received-city city
+                                        :received-phone phone})
                          (swap! orders dissoc id)
                          (answer (str "<b>Спасибо за заявку!</b>\n\n"
                                       "Наш менеджер свяжется с вами в ближайшее время, чтобы обсудить детали вашего дизайн-проекта и помочь вам максимально выгодно приобрести кухню вашей мечты.\n\n"
