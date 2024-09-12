@@ -1,22 +1,10 @@
 #merge [{:telegram-bot/client
          {:token #env "CLIENT_BOT_TELEGRAM_TOKEN"}
 
-         :answer/send-email {:api-key #env "EMAIL_API_KEY"}
-
-         :answer/push-request {:sign #env "PUSH_REQUEST_SIGN"
-                               :api-url #env "PUSH_REQUEST_API_URL"}
-
-         :answer/->dialogue {:bot #ig/ref :telegram-bot/client
-                             :send-email #ig/ref :answer/send-email
-                             :push-request #ig/ref :answer/push-request}
-
-         :answer/->menu {:bot #ig/ref :telegram-bot/client}
-
-         :answer/msg->answer {:->dialogue #ig/ref :answer/->dialogue
-                              :->menu #ig/ref :answer/->menu} 
+         :quiz/msg->answer {}
          
          :telegram-bot/msg-handler
-         {:msg->answer #ig/ref :answer/msg->answer}
+         {:msg->answer #ig/ref :quiz/msg->answer}
 
          :telegram-bot/run-client
          {:bot #ig/ref :telegram-bot/client
