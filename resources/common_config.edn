@@ -1,7 +1,7 @@
 #merge [{:telegram-bot/client
          {:token #env "CLIENT_BOT_TELEGRAM_TOKEN"}
 
-         :quiz/msg->answer {}
+         :quiz/msg->answer {:bot #ig/ref :telegram-bot/client}
 
          :telegram-bot/msg-handler
          {:msg->answer #ig/ref :quiz/msg->answer}
