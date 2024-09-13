@@ -39,14 +39,14 @@
 
 (comment
   (System/getenv "CLIENT_BOT_TELEGRAM_TOKEN")
-  
-  (-> load-config
+
+  (-> (load-config)
       :db/ds
+      #_(migratus/rollback)
       (migratus/create "create-user"))
 
   (start-system!)
 
   (stop-system!) ;;stop watch
 
-  (igr/halt)
-  )
+  (igr/halt))

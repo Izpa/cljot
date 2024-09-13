@@ -4,11 +4,14 @@
    [integrant.core :as ig]
    [migratus.core :as migratus]
    [next.jdbc :as jdbc]
+   [taoensso.timbre :as log]
    [next.jdbc.result-set :as rs]))
 
 (defmethod ig/init-key ::ds [_ {:keys [db] :as db-config}]
   (migratus/init db-config)
-  (migratus/migrate db-config)
+  (if-let [migrations (migratus/migrate db-config)]
+    (log/error "Migration error" {:error migrations})
+    (log/info "Migrations completed"))
   (jdbc/get-datasource db))
 
 (defn execute-sql-map!
