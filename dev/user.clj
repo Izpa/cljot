@@ -41,6 +41,9 @@
 
   (start-system!)
 
+  (print @system)
+
   (stop-system!) ;;stop watch
 
-  (igr/halt))
+  (igr/halt)
+  )

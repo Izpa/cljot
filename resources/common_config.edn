@@ -2,7 +2,7 @@
          {:token #env "CLIENT_BOT_TELEGRAM_TOKEN"}
 
          :quiz/msg->answer {}
-         
+
          :telegram-bot/msg-handler
          {:msg->answer #ig/ref :quiz/msg->answer}
 

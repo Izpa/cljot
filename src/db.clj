@@ -7,13 +7,14 @@
    [next.jdbc.result-set :as rs]))
 
 (defmethod ig/init-key ::ds [_ db-config]
-  (let [migratus-config {:sotre                :database
-                         :migration-dir        "migrations/"
-                         :migration-table-name "migrations"
-                         :db                   db-config}]
+  (let [migratus-config {:store         :database
+                         :migration-dir "migrations/"
+                        ;;  :subprotocol "postgresql"
+                        ;;  :classname "org.postgresql.Driver"
+                         :db            db-config}]
     (migratus/init migratus-config)
-    (migratus/migrate migratus-config))
-  (jdbc/get-datasource db-config))
+    (migratus/migrate migratus-config)
+    (jdbc/get-datasource db-config)))
 
 (defn execute-sql-map!
   ([ds sql-map] (execute-sql-map! sql-map ds false))
