@@ -7,10 +7,21 @@
          :quiz/admin? {:admin-chat-ids #custom/env-to-set "ADMIN_CHAT_IDS"}
 
          :quiz/telegram-send {:bot #ig/ref :telegram-bot/client}
+
+         :quiz/user-welcome {:db-execute! #ig/ref :db/execute!}
+
+         :quiz/user-main-chain {:db-execute! #ig/ref :db/execute!
+                                :subscribed? #ig/ref :quiz/subscribed?}
          
-         :quiz/msg->answer {:db-execute! #ig/ref :db/execute!
+         :quiz/user-answer {:db-execute! #ig/ref :db/execute!
+                            :user-welcome #ig/ref :quiz/user-welcome
+                            :user-main-chain #ig/ref :quiz/user-main-chain}
+
+         :quiz/admin-answer {:db-execute! #ig/ref :db/execute!}
+         
+         :quiz/msg->answer {:user-answer #ig/ref :quiz/user-answer
+                            :admin-answer #ig/ref :quiz/admin-answer
                             :telegram-send #ig/ref :quiz/telegram-send
-                            :subscribed? #ig/ref :quiz/subscribed?
                             :admin? #ig/ref :quiz/admin?}
 
          :telegram-bot/msg-handler
