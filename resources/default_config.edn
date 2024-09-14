@@ -1,5 +1,5 @@
 {:db/ds
- {:migration-dir "migrations/"
+ {:migration-dir "migrations"
   :store :database
   :db {:dbtype   "postgresql"
        :host     #or [#env "DB_HOST" "localhost"]
