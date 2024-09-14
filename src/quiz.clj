@@ -7,13 +7,13 @@
 
 (defmethod ig/init-key ::subscribed? [_ {:keys [bot channel-id]}]
   #(let [{:keys [ok error_code description]
-          {:keys [user]} :result
+          {:keys [status]} :result
           :as response} (tbot/get-chat-member bot channel-id %)]
      (when (and (not ok)
                 (= error_code 400)
                 (= description "Bad Request: PARTICIPANT_ID_INVALID"))
        (log/error "Unexpected get-chat-memeber response" response))
-     (and ok (not-empty user))))
+     (not= status "left")))
 
 (defmethod ig/init-key ::admin? [_ {:keys [admin-chat-ids]}]
   #(contains? admin-chat-ids %))
