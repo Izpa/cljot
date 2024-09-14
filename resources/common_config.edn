@@ -5,8 +5,11 @@
                             :channel-id #or [#env "CHANNEL_CHECK_ID" -1002294764534]}
 
          :quiz/admin? {:admin-chat-ids #custom/env-to-set "ADMIN_CHAT_IDS"}
-         :quiz/msg->answer {:bot #ig/ref :telegram-bot/client
-                            :db-execute! #ig/ref :db/execute!
+
+         :quiz/telegram-send {:bot #ig/ref :telegram-bot/client}
+         
+         :quiz/msg->answer {:db-execute! #ig/ref :db/execute!
+                            :telegram-send #ig/ref :quiz/telegram-send
                             :subscribed? #ig/ref :quiz/subscribed?
                             :admin? #ig/ref :quiz/admin?}
 

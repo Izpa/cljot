@@ -18,13 +18,18 @@
 (defmethod ig/init-key ::admin? [_ {:keys [admin-chat-ids]}]
   #(contains? admin-chat-ids %))
 
-(defmethod ig/init-key ::msg->answer [_ {:keys [bot db-execute! admin? subscribed?]}]
+(defmethod ig/init-key ::telegram-send [_ {:keys [bot]}]
+  (fn [to-id content]
+    (tbot/send-message bot to-id content)))
+
+(defmethod ig/init-key ::msg->answer [_ {:keys [db-execute! telegram-send admin? subscribed?]}]
   (fn [msg]
     (let [{{:keys [id]
             :as chat} :chat
-           :keys [data]} msg]
+           :keys [data]} msg
+          answer (partial telegram-send id)]
       (if #_(admin? id) false ;; TODO change back after dev
-          (tbot/send-message bot id "Вы админ")
+          (answer "Вы админ")
           (let [user (db-execute! {:select :*
                                    :from :users
                                    :where [:= :id id]}
@@ -37,8 +42,6 @@
                                                    :last_name
                                                    :first_name])]}
                            true))
-            (tbot/send-message bot
-                               id
-                               (if (subscribed? id)
-                                 "Вы подписаны"
-                                 "Вы не подписаны")))))))
+            (answer (if (subscribed? id)
+                      "Вы подписаны"
+                      "Вы не подписаны")))))))
