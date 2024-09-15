@@ -15,7 +15,7 @@
   (jdbc/get-datasource db))
 
 (defn execute-sql-map!
-  ([ds sql-map] (execute-sql-map! sql-map ds false))
+  ([ds sql-map] (execute-sql-map! ds sql-map false))
   ([ds sql-map one?]
    (log/debug "execute sql-query: " (sql/format sql-map))
    ((if one?
@@ -27,6 +27,4 @@
                       :pretty true})))
 
 (defmethod ig/init-key ::execute! [_ {:keys [ds]}]
-  (fn
-    ([sql-map] (execute-sql-map! ds sql-map))
-    ([sql-map one?] (execute-sql-map! ds sql-map one?))))
+  (partial execute-sql-map! ds))

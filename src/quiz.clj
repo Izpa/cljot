@@ -27,13 +27,11 @@
                                          main-content
                                          additional-content)]
      (log/info "Send message: "
-               sent_message)
+               (pformat sent_message))
      sent_message)))
 
 (defmethod ig/init-key ::telegram-send [_ {:keys [bot]}]
-  (fn
-    ([to-id main-content] (telegram-send bot to-id main-content))
-    ([to-id main-content additional-content] (telegram-send bot to-id main-content additional-content))))
+  (partial telegram-send bot))
 
 (def subscribed-callback-data "subscribed")
 
@@ -74,23 +72,41 @@
                            (not= 0))]
       (if (or (subscribed? id)
               any-answers?)
-        (let [next-question (db-execute! {:select   [[:q.id :question_id]
-                                                     [:q.text :question_text]
-                                                     [:a.question-message-id]
-                                                     [:o.id :option_id]
-                                                     [:o.text :option_text]]
-                                          :from     [[:questions :q]]
-                                          :join-by [:left [[:question-options :o] [:= :q.id :o.question-id]]
-                                                    :left [[:user-answers :a] [:and
-                                                                               [:= :q.id :a.question-id]
-                                                                               [:= :a.user-id id]]]]
-                                          :where    [:and
-                                                     [:is :a.answer-text nil]
-                                                     [:is :a.option-id nil]]
-                                          :order-by [[:q.sort_order] [:o.sort_order]]
-                                          :limit    1}
-                                         false)]
-          (answer next-question))
+        (let [{:keys [question-id
+                      question-text
+                      question-message-id
+                      options]} (-> {:select   [[:q.id :question_id]
+                                                      [:q.text :question_text]
+                                                      [:a.question-message-id]
+                                                      [:o.id :option_id]
+                                                      [:o.text :option_text]]
+                                           :from     [[:questions :q]]
+                                           :join-by [:left [[:question-options :o] [:= :q.id :o.question-id]]
+                                                     :left [[:user-answers :a] [:and
+                                                                                [:= :q.id :a.question-id]
+                                                                                [:= :a.user-id id]]]]
+                                           :where    [:and
+                                                      [:is :a.answer-text nil]
+                                                      [:is :a.option-id nil]]
+                                           :order-by [[:q.sort_order] [:o.sort_order]]
+                                 :limit    1}
+                                (db-execute! false)
+                                first)]
+          (if question-message-id
+            (if options
+              (if data
+                (answer "Not implemented (correct answer for question with options)")
+                (answer "Not implementd (incorrect answer for question with options)"))
+              (if text
+                (answer "Not implemented (correct answer for question without options)")
+                (answer "Not implemented (incorrect answer for quesion without opetions)")))
+            (->> (answer question-text)
+                 :result
+                 :message_id
+                 (assoc {:user_id id :question_id question-id} :question_message_id)
+                 (conj [])
+                 (assoc {:insert-into :user-answers} :values)
+                 (db-execute!))))
         (answer "Надо всё-таки подписаться" subscribed-additional-content)))))
 
 (defmethod ig/init-key ::user-answer [_ {:keys [db-execute! user-welcome user-main-chain]}]
