@@ -23,9 +23,9 @@
   ([bot to-id main-content] (telegram-send bot to-id main-content {}))
   ([bot to-id main-content additional-content]
    (let [sent_message (tbot/send-message bot
-                                  to-id
-                                  main-content
-                                  additional-content)]
+                                         to-id
+                                         main-content
+                                         additional-content)]
      (log/info "Send message: "
                sent_message)
      sent_message)))
@@ -76,17 +76,20 @@
               any-answers?)
         (let [next-question (db-execute! {:select   [[:q.id :question_id]
                                                      [:q.text :question_text]
+                                                     [:a.question-message-id]
                                                      [:o.id :option_id]
                                                      [:o.text :option_text]]
                                           :from     [[:questions :q]]
-                                          :left-join [[:question-options :o] [:= :q.id :o.question_id]]
-                                          :where    [:not-in :q.id
-                                                     {:select [:question_id]
-                                                      :from   [:user-answers]
-                                                      :where  [:= :user_id id]}]
+                                          :join-by [:left [[:question-options :o] [:= :q.id :o.question-id]]
+                                                    :left [[:user-answers :a] [:and
+                                                                               [:= :q.id :a.question-id]
+                                                                               [:= :a.user-id id]]]]
+                                          :where    [:and
+                                                     [:is :a.answer-text nil]
+                                                     [:is :a.option-id nil]]
                                           :order-by [[:q.sort_order] [:o.sort_order]]
                                           :limit    1}
-                                         true)]
+                                         false)]
           (answer next-question))
         (answer "Надо всё-таки подписаться" subscribed-additional-content)))))
 

@@ -17,6 +17,7 @@
 (defn execute-sql-map!
   ([ds sql-map] (execute-sql-map! sql-map ds false))
   ([ds sql-map one?]
+   (log/debug "execute sql-query: " (sql/format sql-map))
    ((if one?
       jdbc/execute-one!
       jdbc/execute!) ds
