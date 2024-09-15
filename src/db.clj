@@ -26,4 +26,6 @@
                       :pretty true})))
 
 (defmethod ig/init-key ::execute! [_ {:keys [ds]}]
-  (partial execute-sql-map! ds))
+  (fn
+    ([sql-map] (execute-sql-map! ds sql-map))
+    ([sql-map one?] (execute-sql-map! ds sql-map one?))))

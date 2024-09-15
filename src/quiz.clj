@@ -1,6 +1,7 @@
 (ns quiz
   (:require
    [integrant.core :as ig]
+   [honey.sql :as sql]
    [taoensso.timbre :as log]
    [telegrambot-lib.core :as tbot]
    [utils :refer [pformat]]))
@@ -21,12 +22,25 @@
 (defn telegram-send
   ([bot to-id main-content] (telegram-send bot to-id main-content {}))
   ([bot to-id main-content additional-content]
-   (tbot/send-message bot to-id main-content additional-content)))
+   (let [sent_message (tbot/send-message bot
+                                  to-id
+                                  main-content
+                                  additional-content)]
+     (log/info "Send message: "
+               sent_message)
+     sent_message)))
 
 (defmethod ig/init-key ::telegram-send [_ {:keys [bot]}]
   (fn
     ([to-id main-content] (telegram-send bot to-id main-content))
     ([to-id main-content additional-content] (telegram-send bot to-id main-content additional-content))))
+
+(def subscribed-callback-data "subscribed")
+
+(def subscribed-additional-content
+  {:reply_markup {:inline_keyboard [[{:text "Я подписался"
+                                      :callback_data subscribed-callback-data}]]}
+   :parse_mode "HTML"})
 
 (defmethod ig/init-key ::user-welcome [_ {:keys [db-execute!]}]
   (fn [answer chat]
@@ -44,18 +58,37 @@
                  "В нем мы рассказываем про наши события и инновации внутри ЛАНИТ и в мире. "
                  "А сегодня разыгрываем 15 футболок от Центра инноваций и SlovoDna? "
                  "Условия простые - просто подписаться на наш канал!\n\n"
-                 "После подписки нажми кнопку “Я подписался”")
-            {:reply_markup {:inline_keyboard [[{:text "Я подписался"
-                                                :callback_data "subscribed"}]]
-                            :remove_keyboard true}
-             :parse_mode "HTML"})))
+                 "После подписки нажми кнопку “Я подписался”") ;;TODO: нет ссылки на канал
+            subscribed-additional-content)))
 
 (defmethod ig/init-key ::user-main-chain [_ {:keys [db-execute! subscribed?]}]
   (fn [msg answer]
-    (let [{{:keys [id]
-            :as chat} :chat
-           :keys [data]} msg]
-      (answer "Not implemented yet"))))
+    (let [{{:keys [id]} :chat
+           :keys [data
+                  text]} msg
+          any-answers? (-> {:select [[(sql/call :count :*)]]
+                            :from [:user-answers]
+                            :where [:= :user-id id]}
+                           (db-execute! true)
+                           :count
+                           (not= 0))]
+      (if (or (subscribed? id)
+              any-answers?)
+        (let [next-question (db-execute! {:select   [[:q.id :question_id]
+                                                     [:q.text :question_text]
+                                                     [:o.id :option_id]
+                                                     [:o.text :option_text]]
+                                          :from     [[:questions :q]]
+                                          :left-join [[:question-options :o] [:= :q.id :o.question_id]]
+                                          :where    [:not-in :q.id
+                                                     {:select [:question_id]
+                                                      :from   [:user-answers]
+                                                      :where  [:= :user_id id]}]
+                                          :order-by [[:q.sort_order] [:o.sort_order]]
+                                          :limit    1}
+                                         true)]
+          (answer next-question))
+        (answer "Надо всё-таки подписаться" subscribed-additional-content)))))
 
 (defmethod ig/init-key ::user-answer [_ {:keys [db-execute! user-welcome user-main-chain]}]
   (fn [msg answer]

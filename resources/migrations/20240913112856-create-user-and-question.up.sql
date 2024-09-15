@@ -7,20 +7,21 @@ CREATE TABLE users (
 --;;
 CREATE TABLE questions (
     id SERIAL PRIMARY KEY,
-    question_text TEXT NOT NULL,
+    text TEXT NOT NULL,
     sort_order INT NOT NULL DEFAULT 0
 );
 --;;
 CREATE TABLE question_options (
     id SERIAL PRIMARY KEY,
     question_id INT REFERENCES questions(id) ON DELETE CASCADE,
-    option_text TEXT NOT NULL,
+    text TEXT NOT NULL,
     is_correct BOOLEAN DEFAULT FALSE,
     sort_order INT NOT NULL DEFAULT 0
 );
 --;;
 CREATE TABLE user_answers (
     id SERIAL PRIMARY KEY,
+    question_message_id BIGINT,
     user_id INT REFERENCES users(id) ON DELETE CASCADE,
     question_id INT REFERENCES questions(id) ON DELETE CASCADE,
     answer_text TEXT,
@@ -28,7 +29,7 @@ CREATE TABLE user_answers (
     answered_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 --;;
-INSERT INTO questions (question_text, sort_order)
+INSERT INTO questions (text, sort_order)
 VALUES 
     ('Давай знакомиться! В каком подразделении ты работаешь?', 10),
     ('Твоя должность в ЛАНИТ.\nВводим реальные данные, проверим )))', 20),
@@ -46,7 +47,7 @@ VALUES
     ('Почему важно понимать юнит-экономику продукта?', 130),
     ('Как называется метод анализа, при котором сравниваются функциональные возможности вашего продукта и конкурентов?', 140);
 --;;
-INSERT INTO question_options (question_id, option_text, is_correct, sort_order)
+INSERT INTO question_options (question_id, text, is_correct, sort_order)
 VALUES
     (3, 'Да', FALSE, 1),
     (3, 'Что-то слышал, но не вникал', FALSE, 2),

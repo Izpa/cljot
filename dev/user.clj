@@ -43,7 +43,7 @@
   (-> (load-config)
       :db/ds
       #_(migratus/rollback)
-      (migratus/create "create-user"))
+      #_(migratus/create "create-user"))
 
   (start-system!)
 
