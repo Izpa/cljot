@@ -59,55 +59,81 @@
                  "После подписки нажми кнопку “Я подписался”") ;;TODO: нет ссылки на канал
             subscribed-additional-content)))
 
+(defn questions [db-execute! subscribed? msg answer]
+  (let [{{:keys [id]} :chat
+         :keys [data
+                text]} msg
+        any-answers? (-> {:select [[(sql/call :count :*)]]
+                          :from [:user-answers]
+                          :where [:= :user-id id]}
+                         (db-execute! true)
+                         :count
+                         (not= 0))]
+    (if (or (subscribed? id)
+            any-answers?)
+      (let [db-question (db-execute! {:with [[:next-unanswered-question
+                                              {:select [[:q.id :question-id]
+                                                        [:q.text :question-text]
+                                                        [:a.question-message-id :question-message-id]]
+                                               :from [[:questions :q]]
+                                               :left-join [[:user-answers :a]
+                                                           [:and
+                                                            [:= :q.id :a.question-id]
+                                                            [:= :a.user-id id]]]
+                                               :where [:and
+                                                       [:is :a.answer-text nil]
+                                                       [:is :a.option-id nil]]
+                                               :order-by [[:q.sort-order]]
+                                               :limit 1}]]
+                                      :select [[:nuq.question-id :question-id]
+                                               [:nuq.question-text :question-text]
+                                               [:nuq.question-message-id :question-message-id]
+                                               [:o.id :option-id]
+                                               [:o.text :option-text]]
+                                      :from [[:next-unanswered-question :nuq]]
+                                      :left-join [[:question-options :o]
+                                                  [:= :nuq.question-id :o.question-id]]
+                                      :order-by [[:o.sort-order]]}
+                                     false)
+            {:keys [question-id
+                    question-text
+                    question-message-id
+                    options]} (reduce (fn [q {:keys [option-id option-text]}]
+                                        (update q :options assoc option-id option-text))
+                                      (-> db-question
+                                          first
+                                          (select-keys [:question-id
+                                                        :question-text
+                                                        :question-message-id])
+                                          (assoc :options {}))
+                                      db-question)]
+        (log/debug "data: " data);; TODO delete me
+        (if question-message-id
+          (if options
+            (if (and data
+                     (get options data))
+              (do (answer "Not implemented (correct answer for question with options)")
+                  (questions db-execute! subscribed? msg answer))
+              (answer "Пожалуйста, используйте кнопки для ответа"))
+            (if text
+              (do (db-execute! {:update :user-answers
+                                :set {:answer-text text}
+                                :where [:and
+                                        [:= :user-id id]
+                                        [:= :question-id question-id]]})
+                  (questions db-execute! subscribed? msg answer))
+              (answer "Пожалуйста, используйте текст для ответа")))
+          (->> (answer question-text)
+               :result
+               :message_id
+               (assoc {:user-id id :question-id question-id} :question-message-id)
+               (conj [])
+               (assoc {:insert-into :user-answers} :values)
+               (db-execute!))))
+      (answer "Надо всё-таки подписаться" subscribed-additional-content))))
+
 (defmethod ig/init-key ::user-main-chain [_ {:keys [db-execute! subscribed?]}]
-  (fn [msg answer]
-    (let [{{:keys [id]} :chat
-           :keys [data
-                  text]} msg
-          any-answers? (-> {:select [[(sql/call :count :*)]]
-                            :from [:user-answers]
-                            :where [:= :user-id id]}
-                           (db-execute! true)
-                           :count
-                           (not= 0))]
-      (if (or (subscribed? id)
-              any-answers?)
-        (let [{:keys [question-id
-                      question-text
-                      question-message-id
-                      options]} (-> {:select   [[:q.id :question_id]
-                                                      [:q.text :question_text]
-                                                      [:a.question-message-id]
-                                                      [:o.id :option_id]
-                                                      [:o.text :option_text]]
-                                           :from     [[:questions :q]]
-                                           :join-by [:left [[:question-options :o] [:= :q.id :o.question-id]]
-                                                     :left [[:user-answers :a] [:and
-                                                                                [:= :q.id :a.question-id]
-                                                                                [:= :a.user-id id]]]]
-                                           :where    [:and
-                                                      [:is :a.answer-text nil]
-                                                      [:is :a.option-id nil]]
-                                           :order-by [[:q.sort_order] [:o.sort_order]]
-                                 :limit    1}
-                                (db-execute! false)
-                                first)]
-          (if question-message-id
-            (if options
-              (if data
-                (answer "Not implemented (correct answer for question with options)")
-                (answer "Not implementd (incorrect answer for question with options)"))
-              (if text
-                (answer "Not implemented (correct answer for question without options)")
-                (answer "Not implemented (incorrect answer for quesion without opetions)")))
-            (->> (answer question-text)
-                 :result
-                 :message_id
-                 (assoc {:user_id id :question_id question-id} :question_message_id)
-                 (conj [])
-                 (assoc {:insert-into :user-answers} :values)
-                 (db-execute!))))
-        (answer "Надо всё-таки подписаться" subscribed-additional-content)))))
+  (partial questions db-execute! subscribed?))
 
 (defmethod ig/init-key ::user-answer [_ {:keys [db-execute! user-welcome user-main-chain]}]
   (fn [msg answer]
