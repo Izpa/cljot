@@ -60,11 +60,55 @@
                  "После подписки нажми кнопку “Я подписался”")
             subscribed-additional-content)))
 
-(defn questions [db-execute! subscribed? msg answer]
-  (let [{{:keys [id]} :chat
-         :keys [data
-                text]} msg
-        data (try (Integer/parseInt data)
+(defn user-id->next-question
+  [db-execute! user-id]
+  (let [db-question (db-execute! {:with [[:next-unanswered-question
+                                          {:select [[:q.id :question-id]
+                                                    [:q.text :question-text]
+                                                    [:a.question-message-id :question-message-id]]
+                                           :from [[:questions :q]]
+                                           :left-join [[:user-answers :a]
+                                                       [:and
+                                                        [:= :q.id :a.question-id]
+                                                        [:= :a.user-id user-id]]]
+                                           :where [:and
+                                                   [:is :a.answer-text nil]
+                                                   [:is :a.option-id nil]]
+                                           :order-by [[:q.sort-order]]
+                                           :limit 1}]]
+                                  :select [[:nuq.question-id :question-id]
+                                           [:nuq.question-text :question-text]
+                                           [:nuq.question-message-id :question-message-id]
+                                           [:o.id :option-id]
+                                           [:o.text :option-text]]
+                                  :from [[:next-unanswered-question :nuq]]
+                                  :left-join [[:question-options :o]
+                                              [:= :nuq.question-id :o.question-id]]
+                                  :order-by [[:o.sort-order]]}
+                                 false)]
+    (reduce (fn [q {:keys [option-id option-text]}]
+              (if option-id
+                (-> q
+                    (update :options assoc option-id option-text)
+                    (update :option-ids conj option-id))
+                q))
+            (-> db-question
+                first
+                (select-keys [:question-id
+                              :question-text
+                              :question-message-id])
+                (assoc :options {})
+                (assoc :option-ids #{}))
+            db-question)))
+
+(defn questions [db-execute!
+                 subscribed?
+                 answer
+                 {{:keys [id]} :chat
+                  :keys [data
+                         text]
+                  :as msg}]
+  (let [data (try (Integer/parseInt data)
                   (catch Exception _ data))
         any-answers? (-> {:select [[(sql/call :count :*)]]
                           :from [:user-answers]
@@ -74,48 +118,11 @@
                          (not= 0))]
     (if (or (subscribed? id)
             any-answers?)
-      (let [db-question (db-execute! {:with [[:next-unanswered-question
-                                              {:select [[:q.id :question-id]
-                                                        [:q.text :question-text]
-                                                        [:a.question-message-id :question-message-id]]
-                                               :from [[:questions :q]]
-                                               :left-join [[:user-answers :a]
-                                                           [:and
-                                                            [:= :q.id :a.question-id]
-                                                            [:= :a.user-id id]]]
-                                               :where [:and
-                                                       [:is :a.answer-text nil]
-                                                       [:is :a.option-id nil]]
-                                               :order-by [[:q.sort-order]]
-                                               :limit 1}]]
-                                      :select [[:nuq.question-id :question-id]
-                                               [:nuq.question-text :question-text]
-                                               [:nuq.question-message-id :question-message-id]
-                                               [:o.id :option-id]
-                                               [:o.text :option-text]]
-                                      :from [[:next-unanswered-question :nuq]]
-                                      :left-join [[:question-options :o]
-                                                  [:= :nuq.question-id :o.question-id]]
-                                      :order-by [[:o.sort-order]]}
-                                     false)
-            {:keys [question-id
+      (let [{:keys [question-id
                     question-text
                     question-message-id
                     options
-                    option-ids] :as q} (reduce (fn [q {:keys [option-id option-text]}]
-                                                 (if option-id
-                                                   (-> q
-                                                       (update :options assoc option-id option-text)
-                                                       (update :option-ids conj option-id))
-                                                   q))
-                                               (-> db-question
-                                                   first
-                                                   (select-keys [:question-id
-                                                                 :question-text
-                                                                 :question-message-id])
-                                                   (assoc :options {})
-                                                   (assoc :option-ids #{}))
-                                               db-question)]
+                    option-ids]} (user-id->next-question db-execute! id)]
         (if question-id
           (if question-message-id
             (if (not-empty options)
@@ -166,8 +173,7 @@
                            "мы регулярно встречаемся онлайн и офлайн и обмениваемся опытом и экспертизой.\n"
                            "Не уходи далеко от стенда, "
                            "там есть игры, поп-корн и пара коробок с нашими шоколадками, "
-                           "которые сами себя не съедят:)")
-                      )
+                           "которые сами себя не съедят:)"))
               (answer (str "Это было огненно! Ты уже успел прокачать продуктовую бицуху и "
                            "принимаешь участие в розыгрыше футболок - коллаба Центра инноваций и SlovoDna. "
                            "В 19.00 на стенде Центра инноваций мы будем подводить итог розыгрыша, "
@@ -189,16 +195,30 @@
                             true)]
       (if (not user)
         (user-welcome answer chat)
-        (user-main-chain msg answer)))))
+        (user-main-chain answer msg)))))
 
-(defmethod ig/init-key ::admin-answer [_ {:keys [db-execute]}]
-  (fn [msg answer]
-    (answer "admin not implemente yet")))
+(defn command? [text]
+  (when text (str/starts-with? text "/")))
+
+(defmethod ig/init-key ::admin-answer [_ {:keys [db-execute! bot admin?]}]
+  (fn [{{:keys [id]} :chat
+        :keys [text
+               message_id]}
+       answer]
+    (if (command? text)
+      (answer (str "command: " text))
+      (let [user-ids (db-execute! {:select [:id]
+                                   :from :users})]
+        (log/debug "users: " user-ids)
+        (tbot/copy-message bot
+                           id ;;replace to users id
+                           id
+                           message_id)))))
 
 (defmethod ig/init-key ::msg->answer [_ {:keys [telegram-send admin? user-answer admin-answer]}]
   (fn [msg]
     (let [{{:keys [id]} :chat} msg
           answer (partial telegram-send id)]
-      (if #_(admin? id) false ;; TODO change back after dev
-          (admin-answer msg answer)
-          (user-answer msg answer)))))
+      (if (admin? id)
+        (admin-answer msg answer)
+        (user-answer msg answer)))))
