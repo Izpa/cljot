@@ -55,7 +55,7 @@
                  "Топим за продуктовый подход и развиваем продуктовую культуру в корпорации.\n\n"
                  "Нас уже 400 и мы приглашаем тебя подписаться на наш <a href='https://t.me/+C-XaEZ28W5szZTUy'>канал</a>, там  супер! "
                  "В нем мы рассказываем про наши события и инновации внутри ЛАНИТ и в мире. "
-                 "А сегодня разыгрываем 15 футболок от Центра инноваций и SlovoDna? "
+                 "А сегодня разыгрываем 15 футболок от Центра инноваций и SlovoDna! "
                  "Условия простые - просто подписаться на наш канал!\n\n"
                  "После подписки нажми кнопку “Я подписался”")
             subscribed-additional-content)))
@@ -168,18 +168,19 @@
             (if (< correct-answers-count 5)
               (answer (str "Поздравляю, ты проверил себя, "
                            "<a href='https://t.me/addstickers/LANIT3'>стикерпак</a> твой! "
+                           "Ты правильно ответил на " correct-answers-count " вопросов! "
                            "А знания - дело наживное:) И вообще все это погуглить можно. "
-                           "Присоединяйся к сообществу продактов ЛАНИТ, "
+                           "Присоединяйся к <a href='https://t.me/+K8YGduhn8NxiYjg6'>сообщству</a> продактов ЛАНИТ, "
                            "мы регулярно встречаемся онлайн и офлайн и обмениваемся опытом и экспертизой.\n"
                            "Не уходи далеко от стенда, "
                            "там есть игры, поп-корн и пара коробок с нашими шоколадками, "
                            "которые сами себя не съедят:)"))
               (answer (str "Это было огненно! Ты уже успел прокачать продуктовую бицуху и "
+                           "не только получаешь <a href='https://t.me/addstickers/LANIT3'>стикерпак</a>, но и "
                            "принимаешь участие в розыгрыше футболок - коллаба Центра инноваций и SlovoDna. "
                            "В 19.00 на стенде Центра инноваций мы будем подводить итог розыгрыша, "
                            "обязательно приходи лично. "
-                           "Те, кто не придут, уступают свой приз другим участникам:)\n"
-                           "<a href='https://t.me/addstickers/LANIT3'>стикерпак</a> твой!"))))))
+                           "Те, кто не придут, уступают свой приз другим участникам:)"))))))
       (answer "Не видим твою подписку :)" subscribed-additional-content))))
 
 (defmethod ig/init-key ::user-main-chain [_ {:keys [db-execute! subscribed?]}]
@@ -200,20 +201,65 @@
 (defn command? [text]
   (when text (str/starts-with? text "/")))
 
-(defmethod ig/init-key ::admin-answer [_ {:keys [db-execute! bot admin?]}]
-  (fn [{{:keys [id]} :chat
-        :keys [text
-               message_id]}
+(defmethod ig/init-key ::admin-commands [_ {:keys [db-execute! bot admin?]}]
+  {:winner (fn [_msg _text answer]
+             (let [winner (db-execute! {:update :users
+                                        :set {:is-winner true}
+                                        :where [:= :users.id
+                                                {:select [:ua.user-id]
+                                                 :from   [:user-answers :ua]
+                                                 :join   [[:question-options :qo] [:= :ua.option-id :qo.id]
+                                                          [:users :u] [:= :ua.user-id :u.id]]
+                                                 :where  [:and [:= :qo.is-correct true]
+                                                          [:= :u.is-winner nil]]
+                                                 :group-by [:ua.user-id]
+                                                 :having [[:>= (sql/call :count :ua.question-id) 5]]
+                                                 :order-by [(sql/call :random)]
+                                                 :limit 1}]
+                                        :returning [:id :first-name :last-name :username]}
+                                       true)]
+               (answer (str "winner: " winner))))
+   :publish (fn [{{:keys [id]} :chat} message-id answer]
+              (->> {:select [:id]
+                    :from :users}
+                   db-execute!
+                   (map :id)
+                   (filter #(not (admin? %)))
+                   (map #(do (log/debug "user: " %)
+                             (tbot/copy-message bot
+                                   id ;;replace to %
+                                   id
+                                   message-id)))))})
+
+(defmethod ig/init-key ::admin-answer [_ {:keys [admin-commands]}]
+  (fn [{:keys [text
+               message_id
+               data]
+        :as msg}
        answer]
-    (if (command? text)
-      (answer (str "command: " text))
-      (let [user-ids (db-execute! {:select [:id]
-                                   :from :users})]
-        (log/debug "users: " user-ids)
-        (tbot/copy-message bot
-                           id ;;replace to users id
-                           id
-                           message_id)))))
+    (let [command (or text data)]
+      (cond
+        (command? command)
+        (if-let [command-fn (get admin-commands (-> command
+                                                    (str/split #"\s+")
+                                                    first
+                                                    (subs 1)
+                                                    keyword))]
+          (command-fn msg
+                      (->> (str/split command #"\s+")
+                           (rest)
+                           (str/join " "))
+                      answer)
+          (answer "Unknown command"))
+
+        data
+        (log/debug "data: " (pformat data))
+
+        :else
+        (answer "Опубликовать это сообщение?"
+                {:reply_to_message_id message_id
+                 :reply_markup {:inline_keyboard [[{:text "Опубликовать"
+                                                    :callback_data (str "/publish " message_id)}]]}})))))
 
 (defmethod ig/init-key ::msg->answer [_ {:keys [telegram-send admin? user-answer admin-answer]}]
   (fn [msg]

@@ -12,15 +12,17 @@
 
          :quiz/user-main-chain {:db-execute! #ig/ref :db/execute!
                                 :subscribed? #ig/ref :quiz/subscribed?}
-         
+
          :quiz/user-answer {:db-execute! #ig/ref :db/execute!
                             :user-welcome #ig/ref :quiz/user-welcome
                             :user-main-chain #ig/ref :quiz/user-main-chain}
 
-         :quiz/admin-answer {:db-execute! #ig/ref :db/execute!
-                             :bot #ig/ref :telegram-bot/client
-                             :admin? #ig/ref :quiz/admin?}
-         
+         :quiz/admin-commands {:db-execute! #ig/ref :db/execute!
+                               :bot #ig/ref :telegram-bot/client
+                               :admin? #ig/ref :quiz/admin?}
+
+         :quiz/admin-answer {:admin-commands #ig/ref :quiz/admin-commands}
+
          :quiz/msg->answer {:user-answer #ig/ref :quiz/user-answer
                             :admin-answer #ig/ref :quiz/admin-answer
                             :telegram-send #ig/ref :quiz/telegram-send
@@ -44,6 +46,6 @@
 
          :http/server {:port #or [#env "HTTP_PORT" 8080]
                        :handler #ig/ref :http/handler}}
-        
+
         #include #profile {:test "test_config.edn"
                            :default "default_config.edn"}]
