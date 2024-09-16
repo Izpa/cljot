@@ -1,5 +1,6 @@
 (ns quiz
   (:require
+   [clojure.string :as str]
    [integrant.core :as ig]
    [honey.sql :as sql]
    [taoensso.timbre :as log]
@@ -63,6 +64,8 @@
   (let [{{:keys [id]} :chat
          :keys [data
                 text]} msg
+        data (try (Integer/parseInt data)
+                  (catch Exception _ data))
         any-answers? (-> {:select [[(sql/call :count :*)]]
                           :from [:user-answers]
                           :where [:= :user-id id]}
@@ -98,38 +101,65 @@
             {:keys [question-id
                     question-text
                     question-message-id
-                    options]} (reduce (fn [q {:keys [option-id option-text]}]
-                                        (update q :options assoc option-id option-text))
-                                      (-> db-question
-                                          first
-                                          (select-keys [:question-id
-                                                        :question-text
-                                                        :question-message-id])
-                                          (assoc :options {}))
-                                      db-question)]
-        (log/debug "data: " data);; TODO delete me
-        (if question-message-id
-          (if options
-            (if (and data
-                     (get options data))
-              (do (answer "Not implemented (correct answer for question with options)")
-                  (questions db-execute! subscribed? msg answer))
-              (answer "Пожалуйста, используйте кнопки для ответа"))
-            (if text
-              (do (db-execute! {:update :user-answers
-                                :set {:answer-text text}
+                    options
+                    option-ids] :as q} (reduce (fn [q {:keys [option-id option-text]}]
+                                                 (if option-id
+                                                   (-> q
+                                                       (update :options assoc option-id option-text)
+                                                       (update :option-ids conj option-id))
+                                                   q))
+                                               (-> db-question
+                                                   first
+                                                   (select-keys [:question-id
+                                                                 :question-text
+                                                                 :question-message-id])
+                                                   (assoc :options {})
+                                                   (assoc :option-ids #{}))
+                                               db-question)]
+        (if question-id
+          (if question-message-id
+            (if (not-empty options)
+              (if (and data
+                       (contains? option-ids data))
+                (do
+                  (db-execute! {:update :user-answers
+                                :set {:option-id data}
                                 :where [:and
                                         [:= :user-id id]
                                         [:= :question-id question-id]]})
                   (questions db-execute! subscribed? msg answer))
-              (answer "Пожалуйста, используйте текст для ответа")))
-          (->> (answer question-text)
-               :result
-               :message_id
-               (assoc {:user-id id :question-id question-id} :question-message-id)
-               (conj [])
-               (assoc {:insert-into :user-answers} :values)
-               (db-execute!))))
+                (answer "Пожалуйста, используйте кнопки для ответа"))
+              (if text
+                (do (db-execute! {:update :user-answers
+                                  :set {:answer-text text}
+                                  :where [:and
+                                          [:= :user-id id]
+                                          [:= :question-id question-id]]})
+                    (questions db-execute! subscribed? msg answer))
+                (answer "Пожалуйста, используйте текст для ответа")))
+            (->> (if (not-empty options)
+                   {:reply_markup {:inline_keyboard (mapv (fn [[option-id option-text]]
+                                                            [{:text option-text
+                                                              :callback_data option-id}])
+                                                          options)}
+                    :parse_mode "HTML"}
+                   {})
+                 (answer (str/replace question-text #"\\n" "\n"))
+                 :result
+                 :message_id
+                 (assoc {:user-id id :question-id question-id} :question-message-id)
+                 (conj [])
+                 (assoc {:insert-into :user-answers} :values)
+                 (db-execute!)))
+          (let [correct-answers-count (-> {:select [[(sql/call :count "*")]]
+                                           :from   [[:user-answers :ua]]
+                                           :join   [[:question-options :o] [:= :ua.option-id :o.id]]
+                                           :where  [:and
+                                                    [:= :ua.user-id id]
+                                                    [:= :o.is-correct true]]}
+                                          (db-execute! true)
+                                          :count)]
+            (answer (str "Правильных ответов: " correct-answers-count)))))
       (answer "Надо всё-таки подписаться" subscribed-additional-content))))
 
 (defmethod ig/init-key ::user-main-chain [_ {:keys [db-execute! subscribed?]}]
