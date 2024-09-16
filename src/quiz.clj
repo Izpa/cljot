@@ -207,14 +207,14 @@
                                         :set {:is-winner true}
                                         :where [:= :users.id
                                                 {:select [:ua.user-id]
-                                                 :from   [:user-answers :ua]
+                                                 :from   [[:user-answers :ua]]
                                                  :join   [[:question-options :qo] [:= :ua.option-id :qo.id]
                                                           [:users :u] [:= :ua.user-id :u.id]]
                                                  :where  [:and [:= :qo.is-correct true]
                                                           [:= :u.is-winner nil]]
                                                  :group-by [:ua.user-id]
                                                  :having [[:>= (sql/call :count :ua.question-id) 5]]
-                                                 :order-by [(sql/call :random)]
+                                                 :order-by [(sql/call [:random])]
                                                  :limit 1}]
                                         :returning [:id :first-name :last-name :username]}
                                        true)]
@@ -227,9 +227,12 @@
                    (filter #(not (admin? %)))
                    (map #(do (log/debug "user: " %)
                              (tbot/copy-message bot
-                                   id ;;replace to %
-                                   id
-                                   message-id)))))})
+                                                id ;;replace to %
+                                                id
+                                                message-id)))
+                   count
+                   (str "Сообщение отправлено пользователям (кол-во): ")
+                   answer))})
 
 (defmethod ig/init-key ::admin-answer [_ {:keys [admin-commands]}]
   (fn [{:keys [text
@@ -237,7 +240,7 @@
                data]
         :as msg}
        answer]
-    (let [command (or text data)]
+    (let [command (or data text)]
       (cond
         (command? command)
         (if-let [command-fn (get admin-commands (-> command
@@ -251,9 +254,6 @@
                            (str/join " "))
                       answer)
           (answer "Unknown command"))
-
-        data
-        (log/debug "data: " (pformat data))
 
         :else
         (answer "Опубликовать это сообщение?"
