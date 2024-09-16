@@ -26,7 +26,8 @@
    (let [sent_message (tbot/send-message bot
                                          to-id
                                          main-content
-                                         additional-content)]
+                                         (merge {:parse_mode "HTML"}
+                                                additional-content))]
      (log/info "Send message: "
                (pformat sent_message))
      sent_message)))
@@ -38,8 +39,7 @@
 
 (def subscribed-additional-content
   {:reply_markup {:inline_keyboard [[{:text "Я подписался"
-                                      :callback_data subscribed-callback-data}]]}
-   :parse_mode "HTML"})
+                                      :callback_data subscribed-callback-data}]]}})
 
 (defmethod ig/init-key ::user-welcome [_ {:keys [db-execute!]}]
   (fn [answer chat]
@@ -53,11 +53,11 @@
     (answer (str "Давай знакомиться?\n\n"
                  "Мы - Центр инноваций и Клуб LANIT Product manager.\n\n"
                  "Топим за продуктовый подход и развиваем продуктовую культуру в корпорации.\n\n"
-                 "Нас уже 400 и мы приглашаем тебя подписаться на наш канал, там  супер! "
+                 "Нас уже 400 и мы приглашаем тебя подписаться на наш <a href='https://t.me/+C-XaEZ28W5szZTUy'>канал</a>, там  супер! "
                  "В нем мы рассказываем про наши события и инновации внутри ЛАНИТ и в мире. "
                  "А сегодня разыгрываем 15 футболок от Центра инноваций и SlovoDna? "
                  "Условия простые - просто подписаться на наш канал!\n\n"
-                 "После подписки нажми кнопку “Я подписался”") ;;TODO: нет ссылки на канал
+                 "После подписки нажми кнопку “Я подписался”")
             subscribed-additional-content)))
 
 (defn questions [db-execute! subscribed? msg answer]
@@ -141,8 +141,7 @@
                    {:reply_markup {:inline_keyboard (mapv (fn [[option-id option-text]]
                                                             [{:text option-text
                                                               :callback_data option-id}])
-                                                          options)}
-                    :parse_mode "HTML"}
+                                                          options)}}
                    {})
                  (answer (str/replace question-text #"\\n" "\n"))
                  :result
@@ -159,8 +158,23 @@
                                                     [:= :o.is-correct true]]}
                                           (db-execute! true)
                                           :count)]
-            (answer (str "Правильных ответов: " correct-answers-count)))))
-      (answer "Надо всё-таки подписаться" subscribed-additional-content))))
+            (if (< correct-answers-count 5)
+              (answer (str "Поздравляю, ты проверил себя, "
+                           "<a href='https://t.me/addstickers/LANIT3'>стикерпак</a> твой! "
+                           "А знания - дело наживное:) И вообще все это погуглить можно. "
+                           "Присоединяйся к сообществу продактов ЛАНИТ, "
+                           "мы регулярно встречаемся онлайн и офлайн и обмениваемся опытом и экспертизой.\n"
+                           "Не уходи далеко от стенда, "
+                           "там есть игры, поп-корн и пара коробок с нашими шоколадками, "
+                           "которые сами себя не съедят:)")
+                      )
+              (answer (str "Это было огненно! Ты уже успел прокачать продуктовую бицуху и "
+                           "принимаешь участие в розыгрыше футболок - коллаба Центра инноваций и SlovoDna. "
+                           "В 19.00 на стенде Центра инноваций мы будем подводить итог розыгрыша, "
+                           "обязательно приходи лично. "
+                           "Те, кто не придут, уступают свой приз другим участникам:)\n"
+                           "<a href='https://t.me/addstickers/LANIT3'>стикерпак</a> твой!"))))))
+      (answer "Не видим твою подписку :)" subscribed-additional-content))))
 
 (defmethod ig/init-key ::user-main-chain [_ {:keys [db-execute! subscribed?]}]
   (partial questions db-execute! subscribed?))
