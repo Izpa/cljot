@@ -2,9 +2,9 @@
   (:require
    [clojure-watch.core :refer [start-watch]]
    [config :refer [load-config prepare]]
-   [migratus.core :as migratus]
    [integrant.core :as ig]
-   [integrant.repl :as igr]))
+   [integrant.repl :as igr]
+   [migratus.core :as migratus]))
 
 (defn start!
   []

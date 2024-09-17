@@ -4,8 +4,8 @@
    [integrant.core :as ig]
    [migratus.core :as migratus]
    [next.jdbc :as jdbc]
-   [taoensso.timbre :as log]
-   [next.jdbc.result-set :as rs]))
+   [next.jdbc.result-set :as rs]
+   [taoensso.timbre :as log]))
 
 (defmethod ig/init-key ::ds [_ {:keys [db] :as db-config}]
   (migratus/init db-config)

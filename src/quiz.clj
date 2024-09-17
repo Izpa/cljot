@@ -1,8 +1,8 @@
 (ns quiz
   (:require
    [clojure.string :as str]
-   [integrant.core :as ig]
    [honey.sql :as sql]
+   [integrant.core :as ig]
    [taoensso.timbre :as log]
    [telegrambot-lib.core :as tbot]
    [utils :refer [pformat]]))
@@ -101,13 +101,14 @@
                 (assoc :option-ids #{}))
             db-question)))
 
-(defn questions [db-execute!
-                 subscribed?
-                 answer
-                 {{:keys [id]} :chat
-                  :keys [data
-                         text]
-                  :as msg}]
+(defn questions
+  [db-execute!
+   subscribed?
+   answer
+   {{:keys [id]} :chat
+    :keys [data
+           text]
+    :as msg}]
   (let [data (try (Integer/parseInt data)
                   (catch Exception _ data))
         any-answers? (-> {:select [[(sql/call :count :*)]]
@@ -154,7 +155,7 @@
                  :result
                  :message_id
                  (assoc {:user-id id :question-id question-id} :question-message-id)
-                 (conj [])
+                 vector
                  (assoc {:insert-into :user-answers} :values)
                  (db-execute!)))
           (let [correct-answers-count (-> {:select [[(sql/call :count "*")]]
@@ -194,11 +195,12 @@
                              :from :users
                              :where [:= :id id]}
                             true)]
-      (if (not user)
-        (user-welcome answer chat)
-        (user-main-chain answer msg)))))
+      (if user
+        (user-main-chain answer msg)
+        (user-welcome answer chat)))))
 
-(defn command? [text]
+(defn command?
+  [text]
   (when text (str/starts-with? text "/")))
 
 (defmethod ig/init-key ::admin-commands [_ {:keys [db-execute! bot admin?]}]
@@ -227,7 +229,7 @@
                    (filter #(not (admin? %)))
                    (map #(do (log/debug "user: " %)
                              (tbot/copy-message bot
-                                                id ;;replace to %
+                                                id ; replace to %
                                                 id
                                                 message-id)))
                    count

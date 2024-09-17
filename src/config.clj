@@ -6,7 +6,8 @@
    [clojure.string]
    [integrant.core :as ig]))
 
-(defn env-to-set [env-var-name]
+(defn env-to-set
+  [env-var-name]
   (let [env-var (System/getenv env-var-name)]
     (when env-var
       (->> (clojure.string/split env-var #",")

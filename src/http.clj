@@ -7,14 +7,11 @@
    [utils :refer [->num pformat]]))
 
 (defmethod ig/init-key ::handler [_ msg-handler]
-  #(try (do
-          (-> %
-              :body
-              slurp
-              (json/parse-string true)
-              msg-handler)
-          {:status  200
-           :headers {"Content-Type" "text/html"}})
+  #(try (-> %
+            :body
+            slurp
+            (json/parse-string true)
+            msg-handler)
         (catch Exception e
           (log/error "Error request" {:request (pformat %)
                                       :e (pformat e)}))))
