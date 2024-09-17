@@ -80,17 +80,19 @@
                                            [:nuq.question-text :question-text]
                                            [:nuq.question-message-id :question-message-id]
                                            [:o.id :option-id]
-                                           [:o.text :option-text]]
+                                           [:o.text :option-text]
+                                           [:o.is-correct :option-is-correct]]
                                   :from [[:next-unanswered-question :nuq]]
                                   :left-join [[:question-options :o]
                                               [:= :nuq.question-id :o.question-id]]
                                   :order-by [[:o.sort-order]]}
                                  false)]
-    (reduce (fn [q {:keys [option-id option-text]}]
+    (reduce (fn [q {:keys [option-id option-text option-is-correct]}]
               (if option-id
-                (-> q
-                    (update :options assoc option-id option-text)
-                    (update :option-ids conj option-id))
+                (cond-> q
+                  :always (update :options assoc option-id option-text)
+                  :always (update :option-ids conj option-id)
+                  option-is-correct (assoc :correct-option-id option-id))
                 q))
             (-> db-question
                 first
@@ -100,6 +102,33 @@
                 (assoc :options {})
                 (assoc :option-ids #{}))
             db-question)))
+
+(defn after-questions
+  [db-execute! answer user-id]
+  (let [correct-answers-count (-> {:select [[(sql/call :count "*")]]
+                                   :from   [[:user-answers :ua]]
+                                   :join   [[:question-options :o] [:= :ua.option-id :o.id]]
+                                   :where  [:and
+                                            [:= :ua.user-id user-id]
+                                            [:= :o.is-correct true]]}
+                                  (db-execute! true)
+                                  :count)]
+    (if (< correct-answers-count 5)
+      (answer (str "Поздравляю, ты проверил себя, "
+                   "<a href='https://t.me/addstickers/LANIT3'>стикерпак</a> твой! "
+                   "Ты правильно ответил на " correct-answers-count " вопросов! "
+                   "А знания - дело наживное:) И вообще все это погуглить можно. "
+                   "Присоединяйся к <a href='https://t.me/+K8YGduhn8NxiYjg6'>сообщству</a> продактов ЛАНИТ, "
+                   "мы регулярно встречаемся онлайн и офлайн и обмениваемся опытом и экспертизой.\n"
+                   "Не уходи далеко от стенда, "
+                   "там есть игры, поп-корн и пара коробок с нашими шоколадками, "
+                   "которые сами себя не съедят:)"))
+      (answer (str "Это было огненно! Ты уже успел прокачать продуктовую бицуху и "
+                   "не только получаешь <a href='https://t.me/addstickers/LANIT3'>стикерпак</a>, но и "
+                   "принимаешь участие в розыгрыше футболок - коллаба Центра инноваций и SlovoDna. "
+                   "В 19.00 на стенде Центра инноваций мы будем подводить итог розыгрыша, "
+                   "обязательно приходи лично. "
+                   "Те, кто не придут, уступают свой приз другим участникам:)")))))
 
 (defn questions
   [db-execute!
@@ -123,7 +152,8 @@
                     question-text
                     question-message-id
                     options
-                    option-ids]} (user-id->next-question db-execute! id)]
+                    option-ids
+                    correct-option-id]} (user-id->next-question db-execute! id)]
         (if question-id
           (if question-message-id
             (if (not-empty options)
@@ -135,6 +165,11 @@
                                 :where [:and
                                         [:= :user-id id]
                                         [:= :question-id question-id]]})
+                  (when correct-option-id
+                    (if (= data
+                           correct-option-id)
+                      (answer "Верно!")
+                      (answer (str "Неправильно, правильный ответ: " (get options correct-option-id)))))
                   (questions db-execute! subscribed? answer msg))
                 (answer "Пожалуйста, используйте кнопки для ответа"))
               (if text
@@ -158,30 +193,7 @@
                  vector
                  (assoc {:insert-into :user-answers} :values)
                  (db-execute!)))
-          (let [correct-answers-count (-> {:select [[(sql/call :count "*")]]
-                                           :from   [[:user-answers :ua]]
-                                           :join   [[:question-options :o] [:= :ua.option-id :o.id]]
-                                           :where  [:and
-                                                    [:= :ua.user-id id]
-                                                    [:= :o.is-correct true]]}
-                                          (db-execute! true)
-                                          :count)]
-            (if (< correct-answers-count 5)
-              (answer (str "Поздравляю, ты проверил себя, "
-                           "<a href='https://t.me/addstickers/LANIT3'>стикерпак</a> твой! "
-                           "Ты правильно ответил на " correct-answers-count " вопросов! "
-                           "А знания - дело наживное:) И вообще все это погуглить можно. "
-                           "Присоединяйся к <a href='https://t.me/+K8YGduhn8NxiYjg6'>сообщству</a> продактов ЛАНИТ, "
-                           "мы регулярно встречаемся онлайн и офлайн и обмениваемся опытом и экспертизой.\n"
-                           "Не уходи далеко от стенда, "
-                           "там есть игры, поп-корн и пара коробок с нашими шоколадками, "
-                           "которые сами себя не съедят:)"))
-              (answer (str "Это было огненно! Ты уже успел прокачать продуктовую бицуху и "
-                           "не только получаешь <a href='https://t.me/addstickers/LANIT3'>стикерпак</a>, но и "
-                           "принимаешь участие в розыгрыше футболок - коллаба Центра инноваций и SlovoDna. "
-                           "В 19.00 на стенде Центра инноваций мы будем подводить итог розыгрыша, "
-                           "обязательно приходи лично. "
-                           "Те, кто не придут, уступают свой приз другим участникам:)"))))))
+          (after-questions db-execute! answer id)))
       (answer "Не видим твою подписку :)" subscribed-additional-content))))
 
 (defmethod ig/init-key ::user-main-chain [_ {:keys [db-execute! subscribed?]}]
@@ -229,7 +241,7 @@
                               ", ник телеграм: " username
                               (when-not (subscribed? id) " !!!НЕ ПОДПИСАН НА КАНАЛ!!!"))
                          {:reply_markup {:inline_keyboard [[{:text "Сгенерировать ещё"
-                                                    :callback_data (str "/winner")}]]}})
+                                                             :callback_data (str "/winner")}]]}})
                  (answer "Больше участников, удовлетворяющих условию выигрыша нет("))))
    :publish (fn [{{:keys [id]} :chat} message-id answer]
               (->> {:select [:id]
