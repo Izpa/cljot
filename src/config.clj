@@ -6,6 +6,18 @@
    [clojure.string]
    [integrant.core :as ig]))
 
+(defn env-to-set
+  [env-var-name]
+  (let [env-var (System/getenv env-var-name)]
+    (when env-var
+      (->> (clojure.string/split env-var #",")
+           (map #(Integer/parseInt %))
+           set))))
+
+(defmethod aero/reader 'custom/env-to-set
+  [_ _ value]
+  (env-to-set value))
+
 (defmethod aero/reader 'ig/ref [_ _ value]
   (ig/ref value))
 

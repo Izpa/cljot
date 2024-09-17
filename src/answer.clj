@@ -1,19 +1,19 @@
 (ns answer
   (:require
+   [cheshire.core :as cheshire]
    [clj-http.client :as client]
    [integrant.core :as ig]
    [taoensso.timbre :as log]
    [telegrambot-lib.core :as tbot]
-   [utils :refer [pformat]]
-   [cheshire.core :as cheshire]))
+   [utils :refer [pformat]]))
 
 (defrecord Command
-           [command-id
-            button-text
-            answer-fn
-            answer-main-content
-            answer-additional-contnent
-            button-ids])
+  [command-id
+   button-text
+   answer-fn
+   answer-main-content
+   answer-additional-contnent
+   button-ids])
 
 (defn ->command
   [{:keys [command-id

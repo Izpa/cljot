@@ -1,22 +1,35 @@
 #merge [{:telegram-bot/client
          {:token #env "CLIENT_BOT_TELEGRAM_TOKEN"}
 
-         :answer/send-email {:api-key #env "EMAIL_API_KEY"}
+         :quiz/subscribed? {:bot #ig/ref :telegram-bot/client
+                            :channel-id #or [#env "CHANNEL_CHECK_ID" -1002294764534]}
 
-         :answer/push-request {:sign #env "PUSH_REQUEST_SIGN"
-                               :api-url #env "PUSH_REQUEST_API_URL"}
+         :quiz/admin? {:admin-chat-ids #custom/env-to-set "ADMIN_CHAT_IDS"}
 
-         :answer/->dialogue {:bot #ig/ref :telegram-bot/client
-                             :send-email #ig/ref :answer/send-email
-                             :push-request #ig/ref :answer/push-request}
+         :quiz/telegram-send {:bot #ig/ref :telegram-bot/client}
 
-         :answer/->menu {:bot #ig/ref :telegram-bot/client}
+         :quiz/user-welcome {:db-execute! #ig/ref :db/execute!}
 
-         :answer/msg->answer {:->dialogue #ig/ref :answer/->dialogue
-                              :->menu #ig/ref :answer/->menu} 
-         
+         :quiz/user-main-chain {:db-execute! #ig/ref :db/execute!
+                                :subscribed? #ig/ref :quiz/subscribed?}
+
+         :quiz/user-answer {:db-execute! #ig/ref :db/execute!
+                            :user-welcome #ig/ref :quiz/user-welcome
+                            :user-main-chain #ig/ref :quiz/user-main-chain}
+
+         :quiz/admin-commands {:db-execute! #ig/ref :db/execute!
+                               :bot #ig/ref :telegram-bot/client
+                               :admin? #ig/ref :quiz/admin?}
+
+         :quiz/admin-answer {:admin-commands #ig/ref :quiz/admin-commands}
+
+         :quiz/msg->answer {:user-answer #ig/ref :quiz/user-answer
+                            :admin-answer #ig/ref :quiz/admin-answer
+                            :telegram-send #ig/ref :quiz/telegram-send
+                            :admin? #ig/ref :quiz/admin?}
+
          :telegram-bot/msg-handler
-         {:msg->answer #ig/ref :answer/msg->answer}
+         {:msg->answer #ig/ref :quiz/msg->answer}
 
          :telegram-bot/run-client
          {:bot #ig/ref :telegram-bot/client
@@ -33,6 +46,6 @@
 
          :http/server {:port #or [#env "HTTP_PORT" 8080]
                        :handler #ig/ref :http/handler}}
-        
+
         #include #profile {:test "test_config.edn"
                            :default "default_config.edn"}]

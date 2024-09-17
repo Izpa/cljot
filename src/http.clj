@@ -4,17 +4,19 @@
    [integrant.core :as ig]
    [org.httpkit.server :as hk-server]
    [taoensso.timbre :as log]
-   [utils :refer [->num]]))
+   [utils :refer [->num pformat]]))
 
 (defmethod ig/init-key ::handler [_ msg-handler]
-  #(do
-     (-> %
-         :body
-         slurp
-         (json/parse-string true)
-         msg-handler)
-     {:status  200
-      :headers {"Content-Type" "text/html"}}))
+  #(try (-> %
+            :body
+            slurp
+            (json/parse-string true)
+            msg-handler)
+        {:status  200
+         :headers {"Content-Type" "text/html"}}
+        (catch Exception e
+          (log/error "Error request" {:request (pformat %)
+                                      :e (pformat e)}))))
 
 (defmethod ig/init-key ::server [_ {:keys [handler port]}]
   (log/info "Start http-server on port " port)

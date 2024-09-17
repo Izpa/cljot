@@ -56,3 +56,4 @@ clj-deps:
 
 .PHONY: all-checks
 all-checks: cljstyle-check kibit kondo eastwood unit-test integration-test
+

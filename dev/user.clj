@@ -1,9 +1,10 @@
 (ns user
   (:require
    [clojure-watch.core :refer [start-watch]]
-   [config :refer [prepare]]
+   [config :refer [load-config prepare]]
    [integrant.core :as ig]
-   [integrant.repl :as igr]))
+   [integrant.repl :as igr]
+   [migratus.core :as migratus]))
 
 (defn start!
   []
@@ -38,6 +39,11 @@
 
 (comment
   (System/getenv "CLIENT_BOT_TELEGRAM_TOKEN")
+
+  (-> (load-config)
+      :db/ds
+      #_(migratus/rollback)
+      #_(migratus/create "create-user"))
 
   (start-system!)
 

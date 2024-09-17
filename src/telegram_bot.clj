@@ -13,17 +13,17 @@
                                  (assoc :data (:data callback_query))))]
       (do (log/info "Received message")
           (log/info (pformat msg))
-          (try (log/info "Answer: "
-                         (msg->answer msg))
+          (try (msg->answer msg)
                (catch Exception e
                  (log/error "Catch exception " e))))
       (log/error "unexpected message type" (pformat upd)))))
 
-(defmethod ig/halt-key! ::run-client [_ {:keys [thread bot]}]
-  (when thread
-    (log/info "Stop telegram bot")
-    (tbot/delete-webhook bot)
-    (.interrupt ^Thread thread)))
+(defmethod ig/halt-key! ::run-client [_ {:keys [bot thread]}]
+  (if thread
+    (do (log/info "Stop long-polling telegram-bot")
+        (.interrupt ^Thread thread))
+    (do (log/info "Stop webhook telegram-bot")
+        (tbot/delete-webhook bot))))
 
 (defmethod ig/init-key ::run-client [_ {:keys [bot
                                                url

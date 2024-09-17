@@ -32,4 +32,5 @@
                                    set-id!))
                              (Thread/sleep (long (:sleep config))))
                            (recur)))]
-    (.start thread)))
+    (.start thread)
+    thread))
