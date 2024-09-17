@@ -135,7 +135,7 @@
                                 :where [:and
                                         [:= :user-id id]
                                         [:= :question-id question-id]]})
-                  (questions db-execute! subscribed? msg answer))
+                  (questions db-execute! subscribed? answer msg))
                 (answer "Пожалуйста, используйте кнопки для ответа"))
               (if text
                 (do (db-execute! {:update :user-answers
@@ -143,7 +143,7 @@
                                   :where [:and
                                           [:= :user-id id]
                                           [:= :question-id question-id]]})
-                    (questions db-execute! subscribed? msg answer))
+                    (questions db-execute! subscribed? answer msg))
                 (answer "Пожалуйста, используйте текст для ответа")))
             (->> (if (not-empty options)
                    {:reply_markup {:inline_keyboard (mapv (fn [[option-id option-text]]
@@ -203,24 +203,34 @@
   [text]
   (when text (str/starts-with? text "/")))
 
-(defmethod ig/init-key ::admin-commands [_ {:keys [db-execute! bot admin?]}]
+(defmethod ig/init-key ::admin-commands [_ {:keys [db-execute! bot admin? subscribed?]}]
   {:winner (fn [_msg _text answer]
-             (let [winner (db-execute! {:update :users
-                                        :set {:is-winner true}
-                                        :where [:= :users.id
-                                                {:select [:ua.user-id]
-                                                 :from   [[:user-answers :ua]]
-                                                 :join   [[:question-options :qo] [:= :ua.option-id :qo.id]
-                                                          [:users :u] [:= :ua.user-id :u.id]]
-                                                 :where  [:and [:= :qo.is-correct true]
-                                                          [:= :u.is-winner nil]]
-                                                 :group-by [:ua.user-id]
-                                                 :having [[:>= (sql/call :count :ua.question-id) 5]]
-                                                 :order-by [(sql/call [:random])]
-                                                 :limit 1}]
-                                        :returning [:id :first-name :last-name :username]}
-                                       true)]
-               (answer (str "winner: " winner))))
+             (let [{:keys [first-name
+                           last-name
+                           username
+                           id]} (db-execute! {:update :users
+                                              :set {:is-winner true}
+                                              :where [:= :users.id
+                                                      {:select [:ua.user-id]
+                                                       :from   [[:user-answers :ua]]
+                                                       :join   [[:question-options :qo] [:= :ua.option-id :qo.id]
+                                                                [:users :u] [:= :ua.user-id :u.id]]
+                                                       :where  [:and [:= :qo.is-correct true]
+                                                                [:= :u.is-winner nil]]
+                                                       :group-by [:ua.user-id]
+                                                       :having [[:>= (sql/call :count :ua.question-id) 5]]
+                                                       :order-by [(sql/call [:random])]
+                                                       :limit 1}]
+                                              :returning [:id :first-name :last-name :username]}
+                                             true)]
+               (if id
+                 (answer (str "имя: " first-name
+                              ", фамилия: " last-name
+                              ", ник телеграм: " username
+                              (when-not (subscribed? id) " !!!НЕ ПОДПИСАН НА КАНАЛ!!!"))
+                         {:reply_markup {:inline_keyboard [[{:text "Сгенерировать ещё"
+                                                    :callback_data (str "/winner")}]]}})
+                 (answer "Больше участников, удовлетворяющих условию выигрыша нет("))))
    :publish (fn [{{:keys [id]} :chat} message-id answer]
               (->> {:select [:id]
                     :from :users}

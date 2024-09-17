@@ -13,8 +13,7 @@
                                  (assoc :data (:data callback_query))))]
       (do (log/info "Received message")
           (log/info (pformat msg))
-          (try (log/info "Answer: "
-                         (msg->answer msg))
+          (try (msg->answer msg)
                (catch Exception e
                  (log/error "Catch exception " e))))
       (log/error "unexpected message type" (pformat upd)))))

@@ -12,6 +12,8 @@
             slurp
             (json/parse-string true)
             msg-handler)
+        {:status  200
+         :headers {"Content-Type" "text/html"}}
         (catch Exception e
           (log/error "Error request" {:request (pformat %)
                                       :e (pformat e)}))))
