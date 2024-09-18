@@ -251,7 +251,7 @@
                    (filter #(not (admin? %)))
                    (map #(do (log/debug "user: " %)
                              (tbot/copy-message bot
-                                                id ; replace to %
+                                                %
                                                 id
                                                 message-id)))
                    count
