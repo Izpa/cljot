@@ -52,11 +52,12 @@
                  true)
     (answer (str "Давай знакомиться?\n\n"
                  "Мы - Центр инноваций и Клуб LANIT Product manager.\n\n"
-                 "Топим за продуктовый подход и развиваем продуктовую культуру в корпорации.\n\n"
-                 "Нас уже 400 и мы приглашаем тебя подписаться на наш <a href='https://t.me/+C-XaEZ28W5szZTUy'>канал</a>, там  супер! "
-                 "В нем мы рассказываем про наши события и инновации внутри ЛАНИТ и в мире. "
-                 "А сегодня разыгрываем 15 футболок от Центра инноваций и SlovoDna! "
-                 "Условия простые - просто подписаться на наш канал!\n\n"
+                 "Топим за продуктовый подход и развиваем продуктовую культуру в корпорации. "
+                 "Сегодня разыгрываем футболки, которые мы сделали совместно с SlovoDna. "
+                 "Да, на кону те самые футболки - классные и стильные. "
+                 "В таком можно ходить не только на даче:) "
+                 "Условия простые: подписаться на наш <a href='https://t.me/+C-XaEZ28W5szZTUy'>канал</a> "
+                 "и пройти квиз из 5 вопросов.\n\n"
                  "После подписки нажми кнопку “Я подписался”")
             subscribed-additional-content)))
 
@@ -130,6 +131,22 @@
                    "обязательно приходи лично. "
                    "Те, кто не придут, уступают свой приз другим участникам:)")))))
 
+(defn ask-question
+  [question-id question-text  options id answer db-execute!]
+  (->> (if (not-empty options)
+         {:reply_markup {:inline_keyboard (mapv (fn [[option-id option-text]]
+                                                  [{:text option-text
+                                                    :callback_data option-id}])
+                                                options)}}
+         {})
+       (answer (str/replace question-text #"\\n" "\n"))
+       :result
+       :message_id
+       (assoc {:user-id id :question-id question-id} :question-message-id)
+       vector
+       (assoc {:insert-into :user-answers} :values)
+       (db-execute!)))
+
 (defn questions
   [db-execute!
    subscribed?
@@ -180,21 +197,9 @@
                                           [:= :question-id question-id]]})
                     (questions db-execute! subscribed? answer msg))
                 (answer "Пожалуйста, используйте текст для ответа")))
-            (->> (if (not-empty options)
-                   {:reply_markup {:inline_keyboard (mapv (fn [[option-id option-text]]
-                                                            [{:text option-text
-                                                              :callback_data option-id}])
-                                                          options)}}
-                   {})
-                 (answer (str/replace question-text #"\\n" "\n"))
-                 :result
-                 :message_id
-                 (assoc {:user-id id :question-id question-id} :question-message-id)
-                 vector
-                 (assoc {:insert-into :user-answers} :values)
-                 (db-execute!)))
+            (ask-question question-id question-text  options id answer db-execute!))
           (after-questions db-execute! answer id)))
-      (answer "Не видим твою подписку :)" subscribed-additional-content))))
+      (answer "Не видим твою подписку :) Попробуй ещё раз :)" subscribed-additional-content))))
 
 (defmethod ig/init-key ::user-main-chain [_ {:keys [db-execute! subscribed?]}]
   (partial questions db-execute! subscribed?))
