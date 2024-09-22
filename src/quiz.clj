@@ -105,31 +105,18 @@
             db-question)))
 
 (defn after-questions
-  [db-execute! answer user-id]
-  (let [correct-answers-count (-> {:select [[(sql/call :count "*")]]
-                                   :from   [[:user-answers :ua]]
-                                   :join   [[:question-options :o] [:= :ua.option-id :o.id]]
-                                   :where  [:and
-                                            [:= :ua.user-id user-id]
-                                            [:= :o.is-correct true]]}
-                                  (db-execute! true)
-                                  :count)]
-    (if (< correct-answers-count 5)
-      (answer (str "Поздравляю, ты проверил себя, "
-                   "<a href='https://t.me/addstickers/LANIT3'>стикерпак</a> твой! "
-                   "Ты правильно ответил на " correct-answers-count " вопросов! "
-                   "А знания - дело наживное:) И вообще все это погуглить можно. "
-                   "Присоединяйся к <a href='https://t.me/+K8YGduhn8NxiYjg6'>сообщству</a> продактов ЛАНИТ, "
-                   "мы регулярно встречаемся онлайн и офлайн и обмениваемся опытом и экспертизой.\n"
-                   "Не уходи далеко от стенда, "
-                   "там есть игры, поп-корн и пара коробок с нашими шоколадками, "
-                   "которые сами себя не съедят:)"))
-      (answer (str "Это было огненно! Ты уже успел прокачать продуктовую бицуху и "
-                   "не только получаешь <a href='https://t.me/addstickers/LANIT3'>стикерпак</a>, но и "
-                   "принимаешь участие в розыгрыше футболок - коллаба Центра инноваций и SlovoDna. "
-                   "В 19.00 на стенде Центра инноваций мы будем подводить итог розыгрыша, "
-                   "обязательно приходи лично. "
-                   "Те, кто не придут, уступают свой приз другим участникам:)")))))
+  [answer]
+  (answer (str "Это было огненно! "
+               "Лови наш фирменный <a href='https://t.me/addstickers/LANIT3'>стикерпак</a>, "
+               "наклейки можешь взять на стенде :) "
+               "Чтобы и дальше быть на продуктовой волне, "
+               "присоединяйся к <a href='https://t.me/+K8YGduhn8NxiYjg6'>сообщству</a> продактов ЛАНИТ :)"))
+  (answer (str "Совсем скоро будем вручать футболки здесь, на стенде. "
+               "Победителей выберет великий рандомайзер:) "
+               "Жди сообщение в боте.\n\n"
+               "Не уходи далеко, у нас еще есть игры, "
+               "поп-корн и пара коробок с нашими шоколадками, "
+               "которые сами себя не съедят:)")))
 
 (defn ask-question
   [question-id question-text  options id answer db-execute!]
@@ -198,7 +185,7 @@
                     (questions db-execute! subscribed? answer msg))
                 (answer "Пожалуйста, используйте текст для ответа")))
             (ask-question question-id question-text  options id answer db-execute!))
-          (after-questions db-execute! answer id)))
+          (after-questions answer)))
       (answer "Не видим твою подписку :) Попробуй ещё раз :)" subscribed-additional-content))))
 
 (defmethod ig/init-key ::user-main-chain [_ {:keys [db-execute! subscribed?]}]
@@ -220,34 +207,60 @@
   [text]
   (when text (str/starts-with? text "/")))
 
+(defn select-random-users
+  [users-count]
+  {:select [:*]
+   :from :users
+   :where [[:= :is-winner nil]]
+   :order-by [(sql/call [:random])]
+   :limit users-count})
+
+(defn select-winners
+  [db-execute! subscribed? winners-count]
+  (loop [winners []]
+    (if (< (count winners) winners-count)
+      (if-let [users (-> (- winners-count (count winners))
+                         select-random-users
+                         db-execute!
+                         not-empty)]
+        (let [{:keys [subscribed
+                      not-subscribed-ids]}
+              (reduce (fn [r {:keys [id] :as user}]
+                        (if (subscribed? id)
+                          (update r :subscribed conj user)
+                          (update r :not-subscribed-ids conj id)))
+                      {:subscribed []
+                       :not-subscribed-ids []}
+                      users)]
+          (when (not-empty not-subscribed-ids)
+            (db-execute! {:update :users
+                          :set {:is-winner false}
+                          :where [:in :id not-subscribed-ids]} true))
+          (when (not-empty subscribed)
+            (db-execute! {:update :users
+                          :set {:is-winner true}
+                          :where [:in :id (map :id subscribed)]}))
+          (recur (concat winners subscribed)))
+        winners)
+      winners)))
+
 (defmethod ig/init-key ::admin-commands [_ {:keys [db-execute! bot admin? subscribed?]}]
-  {:winner (fn [_msg _text answer]
-             (let [{:keys [first-name
-                           last-name
-                           username
-                           id]} (db-execute! {:update :users
-                                              :set {:is-winner true}
-                                              :where [:= :users.id
-                                                      {:select [:ua.user-id]
-                                                       :from   [[:user-answers :ua]]
-                                                       :join   [[:question-options :qo] [:= :ua.option-id :qo.id]
-                                                                [:users :u] [:= :ua.user-id :u.id]]
-                                                       :where  [:and [:= :qo.is-correct true]
-                                                                [:= :u.is-winner nil]]
-                                                       :group-by [:ua.user-id]
-                                                       :having [[:>= (sql/call :count :ua.question-id) 5]]
-                                                       :order-by [(sql/call [:random])]
-                                                       :limit 1}]
-                                              :returning [:id :first-name :last-name :username]}
-                                             true)]
-               (if id
-                 (answer (str "имя: " first-name
-                              ", фамилия: " last-name
-                              ", ник телеграм: " username
-                              (when-not (subscribed? id) " !!!НЕ ПОДПИСАН НА КАНАЛ!!!"))
-                         {:reply_markup {:inline_keyboard [[{:text "Сгенерировать ещё"
-                                                             :callback_data (str "/winner")}]]}})
-                 (answer "Больше участников, удовлетворяющих условию выигрыша нет("))))
+  {:winner (fn [_msg winner-count answer]
+             (let [winner-count (Integer/parseInt winner-count)
+                   winners (select-winners db-execute! subscribed? winner-count)]
+               (doseq [{:keys [id]} winners]
+                 (tbot/send-message bot
+                                    id
+                                    "ТЫ ВЫИГРАЛ ФУТБОЛКУ, ЖДЕМ ТЕБЯ НА СТЕНДЕ в 19.00. "
+                                    "Если не успеешь, футболка "
+                                    "<s>превратится в тыкву</s> "
+                                    "перейдет к следующему победителю :)"))
+               (answer (str/join "\n"
+                                 (mapv (fn [{:keys [username
+                                                    first-name
+                                                    last-name]}]
+                                         (str username " (" first-name " " last-name ")"))
+                                       winners)))))
    :publish (fn [{{:keys [id]} :chat} message-id answer]
               (->> {:select [:id]
                     :from :users}
