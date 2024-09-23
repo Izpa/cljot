@@ -251,16 +251,18 @@
                (doseq [{:keys [id]} winners]
                  (tbot/send-message bot
                                     id
-                                    "ТЫ ВЫИГРАЛ ФУТБОЛКУ, ЖДЕМ ТЕБЯ НА СТЕНДЕ в 19.00. "
-                                    "Если не успеешь, футболка "
-                                    "<s>превратится в тыкву</s> "
-                                    "перейдет к следующему победителю :)"))
-               (answer (str/join "\n"
-                                 (mapv (fn [{:keys [username
-                                                    first-name
-                                                    last-name]}]
-                                         (str username " (" first-name " " last-name ")"))
-                                       winners)))))
+                                    (str "ТЫ ВЫИГРАЛ ФУТБОЛКУ, ЖДЕМ ТЕБЯ НА СТЕНДЕ в 19.00. "
+                                         "Если не успеешь, футболка "
+                                         "<s>превратится в тыкву</s> "
+                                         "перейдет к следующему победителю :)")))
+               (answer (if (not-empty winners)
+                         (str/join "\n"
+                                   (mapv (fn [{:keys [username
+                                                      first-name
+                                                      last-name]}]
+                                           (str username " (" first-name " " last-name ")"))
+                                         winners))
+                         "Нет участников, удовлетворяющих условиям("))))
    :publish (fn [{{:keys [id]} :chat} message-id answer]
               (->> {:select [:id]
                     :from :users}
