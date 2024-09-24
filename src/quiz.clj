@@ -110,8 +110,7 @@
   (answer (str "Это было огненно!\n"
                "Лови наш фирменный <a href='https://t.me/addstickers/LANIT3'>стикерпак</a>, "
                "наклейки можешь взять на стенде :)\n\n"
-               "<tg-emoji emoji-id="5192974533014865497">⭐️</tg-emoji>"
-               "Чтобы и дальше быть на продуктовой волне, "
+               "⭐️<тобы и дальше быть на продуктовой волне, "
                "присоединяйся к <a href='https://t.me/+K8YGduhn8NxiYjg6'>сообществу</a> продактов ЛАНИТ :)"))
   (answer (str "🎁 Это еще не все! Совсем скоро будем разыгрывать футболки от SlovoDna! "
                "Победителей выберет великий рандомайзер:)\n\n"
@@ -250,6 +249,15 @@
   {:winner (fn [_msg winner-count answer]
              (let [winner-count (Integer/parseInt winner-count)
                    winners (select-winners db-execute! subscribed? winner-count)]
+               (when (not-empty winners)
+                 (doseq [{:keys [id]} (db-execute! {:select [:id] :from :users})]
+                   (tbot/send-message bot
+                                      id
+                                      (str (count winners)
+                                           " победителей выбраны рандомайзером!\n\n"
+                                           (str/join "\n"
+                                                     (mapv :username
+                                                           winners))))))
                (doseq [{:keys [id]} winners]
                  (tbot/send-message bot
                                     id
@@ -312,6 +320,6 @@
   (fn [msg]
     (let [{{:keys [id]} :chat} msg
           answer (partial telegram-send id)]
-      (if false #_(admin? id)
+      (if (admin? id)
         (admin-answer msg answer)
         (user-answer msg answer)))))
