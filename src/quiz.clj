@@ -51,18 +51,14 @@
                                          :first_name])]}
                  true)
     (answer (str "Давай знакомиться?\n\n"
-                 "<tg-emoji emoji-id="5193020635193821897">✌</tg-emoji>"
-                 "Мы - Центр инноваций и Клуб LANIT Product manager.\n\n"
-                 "Топим за продуктовый подход и развиваем продуктовую культуру в корпорации. "
-                 "<tg-emoji emoji-id="5190857255871860288">🔥</tg-emoji>"
-                 "Сегодня разыгрываем футболки, которые мы сделали совместно с SlovoDna. "
+                 "✌️Мы - Центр инноваций и Клуб LANIT Product manager.\n\n"
+                 "Топим за продуктовый подход и развиваем продуктовую культуру в корпорации.\n\n"
+                 "🔥Сегодня разыгрываем футболки, которые мы сделали совместно с SlovoDna. "
                  "Да, на кону те самые футболки - классные и стильные. "
-                 "В таком можно ходить не только на даче:) "
+                 "В такой можно ходить не только на даче:) "
                  "Условия простые:\n\n"
-                 "<tg-emoji emoji-id="5193009038782121737">⚡️</tg-emoji>"
-                 "подписаться на наш <a href='https://t.me/+C-XaEZ28W5szZTUy'>канал</a>\n"
-                 "<tg-emoji emoji-id="5193009038782121737">⚡️</tg-emoji>"
-                 "пройти квиз из 5 вопросов.\n\n"
+                 "⚡️<подписаться на наш <a href='https://t.me/+C-XaEZ28W5szZTUy'>канал</a>\n"
+                 "⚡️<пройти квиз из 5 вопросов.\n\n"
                  "После подписки нажми кнопку “Я подписался”")
             subscribed-additional-content)))
 
@@ -114,10 +110,9 @@
   (answer (str "Это было огненно!\n"
                "Лови наш фирменный <a href='https://t.me/addstickers/LANIT3'>стикерпак</a>, "
                "наклейки можешь взять на стенде :)\n\n"
-               "<tg-emoji emoji-id="5192974533014865497">⭐️</tg-emoji>"
-               "Чтобы и дальше быть на продуктовой волне, "
+               "⭐️<тобы и дальше быть на продуктовой волне, "
                "присоединяйся к <a href='https://t.me/+K8YGduhn8NxiYjg6'>сообществу</a> продактов ЛАНИТ :)"))
-  (answer (str "✨Совсем скоро будем вручать футболки здесь, на стенде./n"
+  (answer (str "🎁 Это еще не все! Совсем скоро будем разыгрывать футболки от SlovoDna! "
                "Победителей выберет великий рандомайзер:)\n\n"
                "💬Жди сообщение в боте.\n\n"
                "Не уходи далеко, у нас еще есть игры, "
@@ -254,6 +249,15 @@
   {:winner (fn [_msg winner-count answer]
              (let [winner-count (Integer/parseInt winner-count)
                    winners (select-winners db-execute! subscribed? winner-count)]
+               (when (not-empty winners)
+                 (doseq [{:keys [id]} (db-execute! {:select [:id] :from :users})]
+                   (tbot/send-message bot
+                                      id
+                                      (str (count winners)
+                                           " победителей выбраны рандомайзером!\n\n"
+                                           (str/join "\n"
+                                                     (mapv :username
+                                                           winners))))))
                (doseq [{:keys [id]} winners]
                  (tbot/send-message bot
                                     id
@@ -316,6 +320,6 @@
   (fn [msg]
     (let [{{:keys [id]} :chat} msg
           answer (partial telegram-send id)]
-      (if false #_(admin? id)
+      (if (admin? id)
         (admin-answer msg answer)
         (user-answer msg answer)))))
