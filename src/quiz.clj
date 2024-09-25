@@ -256,7 +256,7 @@
                  :from :users}
                 db-execute!
                 first
-                count
+                :count
                 (str "Кол-во пользователей: ")
                 answer))
    :winner (fn [_msg winner-count answer]
