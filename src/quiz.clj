@@ -246,7 +246,20 @@
       winners)))
 
 (defmethod ig/init-key ::admin-commands [_ {:keys [db-execute! bot admin? subscribed?]}]
-  {:winner (fn [_msg winner-count answer]
+  {:start (fn [_ _ answer]
+            (answer (str "Вы - администратор! Вам доступны команды:\n"
+                         "/winner N - сгенерировать N победителей (N - число)\n"
+                         "/stat - получить число текущих пользователей\n\n"
+                         "Так же любое сообщение без команды будет предложено переслать всем пользователям бота")))
+   :stat (fn [_ _ answer]
+           (->> {:select [[:%count.*]]
+                 :from :users}
+                db-execute!
+                first
+                count
+                (str "Кол-во пользователей: ")
+                answer))
+   :winner (fn [_msg winner-count answer]
              (let [winner-count (Integer/parseInt winner-count)
                    winners (select-winners db-execute! subscribed? winner-count)]
                (when (not-empty winners)
