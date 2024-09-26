@@ -264,13 +264,17 @@
                    winners (select-winners db-execute! subscribed? winner-count)]
                (when (not-empty winners)
                  (doseq [{:keys [id]} (db-execute! {:select [:id] :from :users})]
-                   (tbot/send-message bot
-                                      id
-                                      (str (count winners)
-                                           " победителей выбраны рандомайзером!\n\n"
-                                           (str/join "\n"
-                                                     (mapv :username
-                                                           winners))))))
+                   (try (tbot/send-message bot
+                                           id
+                                           (str (count winners)
+                                                " победителей выбраны рандомайзером!\n\n"
+                                                (str/join "\n"
+                                                          (mapv #(if-let [username (:username %)]
+                                                                   username
+                                                                   (str/join " " [(:first-name %)
+                                                                                  (:last-name %)]))
+                                                                winners))))
+                        (catch Exception _))))
                (doseq [{:keys [id]} winners]
                  (tbot/send-message bot
                                     id
@@ -279,14 +283,15 @@
                                          "ЖДЕМ ТЕБЯ НА СТЕНДЕ! "
                                          "У тебя есть 30 минут, чтобы получить свой приз. "
                                          "Если не успеешь, футболка <s>превратится в тыкву</s> "
-                                         "перейдет к следующему победителю 😭")
+                                         "перейдет к следующему победителю 😭 (winner-id: " id ")")
                                     {:parse_mode "HTML"}))
                (answer (if (not-empty winners)
                          (str/join "\n"
                                    (mapv (fn [{:keys [username
                                                       first-name
-                                                      last-name]}]
-                                           (str username " (" first-name " " last-name ")"))
+                                                      last-name
+                                                      id]}]
+                                           (str username " (" first-name " " last-name ", winner-id: " id ")"))
                                          winners))
                          "Нет участников, удовлетворяющих условиям("))))
    :publish (fn [{{:keys [id]} :chat} message-id answer]
