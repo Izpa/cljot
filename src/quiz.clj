@@ -340,6 +340,8 @@
   (fn [msg]
     (let [{{:keys [id]} :chat} msg
           answer (partial telegram-send id)]
-      (if (admin? id)
-        (admin-answer msg answer)
-        (user-answer msg answer)))))
+      (if id
+        (if (admin? id)
+          (admin-answer msg answer)
+          (user-answer msg answer))
+        (log/warn "strange message without chat-id: " (pformat msg))))))

@@ -11,7 +11,12 @@
     (if-let [msg (or message (-> callback_query
                                  :message
                                  (assoc :data (:data callback_query))))]
-      (do (log/info "Received message")
+      (do (when (-> msg
+                    :chat
+                    :id
+                    not)
+            (log/warn "strange message without chat-id: " (pformat upd)))
+          (log/info "Received message")
           (log/info (pformat msg))
           (try (msg->answer msg)
                (catch Exception e
