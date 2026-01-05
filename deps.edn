@@ -33,7 +33,7 @@
                 "--middleware" "[vlaaad.reveal.nrepl/middleware,cider.nrepl/cider-middleware]"]}
 
   :cljstyle
-  {:extra-deps {mvxcvi/cljstyle {:mvn/version "0.16.630"}}}
+  {:extra-deps {mvxcvi/cljstyle {:mvn/version "0.17.642"}}}
 
   :kondo
   {:extra-deps {clj-kondo/clj-kondo {:mvn/version "2025.12.23"}}
