@@ -36,7 +36,7 @@
   {:extra-deps {mvxcvi/cljstyle {:mvn/version "0.16.630"}}}
 
   :kondo
-  {:extra-deps {clj-kondo/clj-kondo {:mvn/version "2023.12.15"}}
+  {:extra-deps {clj-kondo/clj-kondo {:mvn/version "2026.01.19"}}
    :main-opts ["-m" "clj-kondo.main" "--lint" "--cache false"]}
 
   :kibit
